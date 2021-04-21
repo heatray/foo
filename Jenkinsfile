@@ -1,3 +1,25 @@
+println BRANCH_NAME
+
+if (BRANCH_NAME == 'master') {
+	Boolean bDefaultLinux = false
+	Boolean bDefaultAndroid = false
+	Boolean bDefaultEditors = false
+	Boolean bDefaultBuilder = false
+	Boolean bDefaultServerCE = false
+	Boolean bDefaultServerEE = false
+	Boolean bDefaultServerIE = false
+	Boolean bDefaultServerDE = false
+} else {
+	Boolean bDefaultLinux = true
+	Boolean bDefaultAndroid = true
+	Boolean bDefaultEditors = true
+	Boolean bDefaultBuilder = true
+	Boolean bDefaultServerCE = true
+	Boolean bDefaultServerEE = true
+	Boolean bDefaultServerIE = true
+	Boolean bDefaultServerDE = true
+}
+
 pipeline {
 	agent none
 	parameters {
@@ -7,42 +29,42 @@ pipeline {
 			name: 'wipe'
 		)
 		booleanParam (
-			defaultValue: true,
+			defaultValue: bDefaultLinux,
 			description: 'Build Linux x64 targets',
 			name: 'linux_64'
 		)
 		booleanParam (
-			defaultValue: true,
+			defaultValue: bDefaultAndroid,
 			description: 'Build Android targets',
 			name: 'android'
 		)
 		booleanParam (
-			defaultValue: true,
+			defaultValue: bDefaultEditors,
 			description: 'Build and publish DesktopEditors packages',
 			name: 'desktopeditor'
 		)
 		booleanParam (
-			defaultValue: true,
+			defaultValue: bDefaultBuilder,
 			description: 'Build and publish DocumentBuilder packages',
 			name: 'documentbuilder'
 		)
 		booleanParam (
-			defaultValue: true,
+			defaultValue: bDefaultServerCE,
 			description: 'Build and publish DocumentServer packages',
 			name: 'documentserver'
 		)
 		booleanParam (
-			defaultValue: true,
+			defaultValue: bDefaultServerEE,
 			description: 'Build and publish DocumentServer-EE packages',
 			name: 'documentserver_ee'
 		)
 		booleanParam (
-			defaultValue: true,
+			defaultValue: bDefaultServerIE,
 			description: 'Build and publish DocumentServer-IE packages',
 			name: 'documentserver_ie'
 		)
 		booleanParam (
-			defaultValue: true,
+			defaultValue: bDefaultServerDE,
 			description: 'Build and publish DocumentServer-DE packages',
 			name: 'documentserver_de'
 		)
@@ -116,33 +138,33 @@ pipeline {
 			}
 		}
 	}
-	post {
-		always {
-			node('master') {
-				script {
-					checkout scm
-					createReports()
-				}
-			}
-			script {
-				if (params.linux_64 && (
-					params.desktopeditor ||
-					params.documentbuilder ||
-					params.documentserver_ee ||
-					params.documentserver_ie ||
-					params.documentserver_de)
-				) {
-					build (
-						job: 'tokenitem',
-						parameters: [
-							string (name: 'stringy', value: env.RELEASE_BRANCH)
-						],
-						wait: false
-					)
-				}
-			}
-		}
-	}
+	// post {
+	// 	always {
+	// 		node('master') {
+	// 			script {
+	// 				checkout scm
+	// 				createReports()
+	// 			}
+	// 		}
+	// 		script {
+	// 			if (params.linux_64 && (
+	// 				params.desktopeditor ||
+	// 				params.documentbuilder ||
+	// 				params.documentserver_ee ||
+	// 				params.documentserver_ie ||
+	// 				params.documentserver_de)
+	// 			) {
+	// 				build (
+	// 					job: 'tokenitem',
+	// 					parameters: [
+	// 						string (name: 'stringy', value: env.RELEASE_BRANCH)
+	// 					],
+	// 					wait: false
+	// 				)
+	// 			}
+	// 		}
+	// 	}
+	// }
 }
 
 def linuxBuildDesktop()
