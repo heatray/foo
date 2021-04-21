@@ -1,23 +1,25 @@
 println BRANCH_NAME
 
 if (BRANCH_NAME == 'master') {
-	bDefaultLinux = false
-	bDefaultAndroid = false
-	bDefaultEditors = false
-	bDefaultBuilder = false
-	bDefaultServerCE = false
-	bDefaultServerEE = false
-	bDefaultServerIE = false
-	bDefaultServerDE = false
+	defaults.linux = false
+	defaults.android = false
+	defaults.editors = false
+	defaults.builder = false
+	defaults.server_ce = false
+	defaults.server_ee = false
+	defaults.server_ie = false
+	defaults.server_de = false
+	defaults.cron = 'H 17 * * *'
 } else {
-	bDefaultLinux = true
-	bDefaultAndroid = true
-	bDefaultEditors = true
-	bDefaultBuilder = true
-	bDefaultServerCE = true
-	bDefaultServerEE = true
-	bDefaultServerIE = true
-	bDefaultServerDE = true
+	defaults.linux = true
+	defaults.android = true
+	defaults.editors = true
+	defaults.builder = true
+	defaults.server_ce = true
+	defaults.server_ee = true
+	defaults.server_ie = true
+	defaults.server_de = true
+	defaults.cron = 'H 17 * * *'
 }
 
 pipeline {
@@ -29,45 +31,48 @@ pipeline {
 			name: 'wipe'
 		)
 		booleanParam (
-			defaultValue: bDefaultLinux,
+			defaultValue: defaults.linux,
 			description: 'Build Linux x64 targets',
 			name: 'linux_64'
 		)
 		booleanParam (
-			defaultValue: bDefaultAndroid,
+			defaultValue: defaults.android,
 			description: 'Build Android targets',
 			name: 'android'
 		)
 		booleanParam (
-			defaultValue: bDefaultEditors,
+			defaultValue: defaults.editors,
 			description: 'Build and publish DesktopEditors packages',
 			name: 'desktopeditor'
 		)
 		booleanParam (
-			defaultValue: bDefaultBuilder,
+			defaultValue: defaults.builder,
 			description: 'Build and publish DocumentBuilder packages',
 			name: 'documentbuilder'
 		)
 		booleanParam (
-			defaultValue: bDefaultServerCE,
+			defaultValue: defaults.server_ce,
 			description: 'Build and publish DocumentServer packages',
 			name: 'documentserver'
 		)
 		booleanParam (
-			defaultValue: bDefaultServerEE,
+			defaultValue: defaults.server_ee,
 			description: 'Build and publish DocumentServer-EE packages',
 			name: 'documentserver_ee'
 		)
 		booleanParam (
-			defaultValue: bDefaultServerIE,
+			defaultValue: defaults.server_ie,
 			description: 'Build and publish DocumentServer-IE packages',
 			name: 'documentserver_ie'
 		)
 		booleanParam (
-			defaultValue: bDefaultServerDE,
+			defaultValue: defaults.server_de,
 			description: 'Build and publish DocumentServer-DE packages',
 			name: 'documentserver_de'
 		)
+	}
+	triggers {
+		cron(defaults.cron)
 	}
 	stages {
 		stage('Prepare') {
