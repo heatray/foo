@@ -206,12 +206,12 @@ def linuxBuildDesktop()
 		EOF
 	"""
 
-	def deployData = readJSON file: 'linuxdesktopdeploy.json'
+	// def deployData = readJSON file: 'linuxdesktopdeploy.json'
 
-	for(item in deployData.items) {
-		println item
-		deployDesktopList.add(item)
-	}
+	// for(item in deployData.items) {
+	// 	println item
+	// 	deployDesktopList.add(item)
+	// }
 
 	return this
 }
@@ -246,12 +246,12 @@ def linuxBuildBuilder()
 		EOF
 	"""
 
-	def deployData = readJSON file: 'linuxbuilderdeploy.json'
+	// def deployData = readJSON file: 'linuxbuilderdeploy.json'
 
-	for(item in deployData.items) {
-		println item
-		deployBuilderList.add(item)
-	}
+	// for(item in deployData.items) {
+	// 	println item
+	// 	deployBuilderList.add(item)
+	// }
 
 	return this
 }
@@ -286,25 +286,25 @@ def linuxBuildServer(String productName='documentserver')
 		EOF
 	"""
 
-	def deployData = readJSON file: "linux${productName}deploy.json"
+	// def deployData = readJSON file: "linux${productName}deploy.json"
 
-	for(item in deployData.items) {
-		println item
-		switch(productName) {
-			case 'documentserver':
-				deployServerCeList.add(item)
-				break
-			case 'documentserver-ee':
-				deployServerEeList.add(item)
-				break
-			case 'documentserver-ie':
-				deployServerIeList.add(item)
-				break
-			case 'documentserver-de':
-				deployServerDeList.add(item)
-				break
-		}
-	}
+	// for(item in deployData.items) {
+	// 	println item
+	// 	switch(productName) {
+	// 		case 'documentserver':
+	// 			deployServerCeList.add(item)
+	// 			break
+	// 		case 'documentserver-ee':
+	// 			deployServerEeList.add(item)
+	// 			break
+	// 		case 'documentserver-ie':
+	// 			deployServerIeList.add(item)
+	// 			break
+	// 		case 'documentserver-de':
+	// 			deployServerDeList.add(item)
+	// 			break
+	// 	}
+	// }
 
 	return this
 }
@@ -329,12 +329,12 @@ def androidBuild()
 		EOF
 	"""
 
-	String androidLibsFile = "android-libs-${env.PRODUCT_VERSION}-${env.BUILD_NUMBER}.zip"
-	String androidLibsUri = "onlyoffice/${env.RELEASE_BRANCH}/android/${androidLibsFile}"
-	def deployData = [platform: 'android', title: 'Android libs', path: androidLibsUri]
+	// String androidLibsFile = "android-libs-${env.PRODUCT_VERSION}-${env.BUILD_NUMBER}.zip"
+	// String androidLibsUri = "onlyoffice/${env.RELEASE_BRANCH}/android/${androidLibsFile}"
+	// def deployData = [platform: 'android', title: 'Android libs', path: androidLibsUri]
 
-	println deployData
-	deployAndroidList.add(deployData)
+	// println deployData
+	// deployAndroidList.add(deployData)
 
 	return this
 }
