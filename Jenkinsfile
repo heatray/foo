@@ -1,27 +1,15 @@
 println BRANCH_NAME
 
 defaults = [:]
-if (BRANCH_NAME == 'master') {
-	defaults.linux = true
-	defaults.android = false
-	defaults.editors = false
-	defaults.builder = false
-	defaults.server_ce = false
-	defaults.server_ee = false
-	defaults.server_ie = false
-	defaults.server_de = false
-	defaults.cron = 'H 17 * * *'
-} else {
-	defaults.linux = true
-	defaults.android = true
-	defaults.editors = true
-	defaults.builder = true
-	defaults.server_ce = true
-	defaults.server_ee = true
-	defaults.server_ie = true
-	defaults.server_de = true
-	defaults.cron = 'H 17 * * *'
-}
+defaults.linux     = BRANCH_NAME == 'master'
+defaults.android   = BRANCH_NAME != 'master'
+defaults.editors   = BRANCH_NAME != 'master'
+defaults.builder   = BRANCH_NAME != 'master'
+defaults.server_ce = BRANCH_NAME != 'master'
+defaults.server_ee = BRANCH_NAME != 'master'
+defaults.server_ie = BRANCH_NAME != 'master'
+defaults.server_de = BRANCH_NAME != 'master'
+defaults.cron      = 'H 17 * * *'
 
 pipeline {
 	agent none
