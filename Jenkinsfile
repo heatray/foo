@@ -1,7 +1,8 @@
 println BRANCH_NAME
 
+defaults = [:]
 if (BRANCH_NAME == 'master') {
-	defaults.linux = false
+	defaults.linux = true
 	defaults.android = false
 	defaults.editors = false
 	defaults.builder = false
