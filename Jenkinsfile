@@ -1,23 +1,23 @@
 println BRANCH_NAME
 
 if (BRANCH_NAME == 'master') {
-	Boolean bDefaultLinux = false
-	Boolean bDefaultAndroid = false
-	Boolean bDefaultEditors = false
-	Boolean bDefaultBuilder = false
-	Boolean bDefaultServerCE = false
-	Boolean bDefaultServerEE = false
-	Boolean bDefaultServerIE = false
-	Boolean bDefaultServerDE = false
+	bDefaultLinux = false
+	bDefaultAndroid = false
+	bDefaultEditors = false
+	bDefaultBuilder = false
+	bDefaultServerCE = false
+	bDefaultServerEE = false
+	bDefaultServerIE = false
+	bDefaultServerDE = false
 } else {
-	Boolean bDefaultLinux = true
-	Boolean bDefaultAndroid = true
-	Boolean bDefaultEditors = true
-	Boolean bDefaultBuilder = true
-	Boolean bDefaultServerCE = true
-	Boolean bDefaultServerEE = true
-	Boolean bDefaultServerIE = true
-	Boolean bDefaultServerDE = true
+	bDefaultLinux = true
+	bDefaultAndroid = true
+	bDefaultEditors = true
+	bDefaultBuilder = true
+	bDefaultServerCE = true
+	bDefaultServerEE = true
+	bDefaultServerIE = true
+	bDefaultServerDE = true
 }
 
 pipeline {
