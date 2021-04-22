@@ -1,16 +1,3 @@
-println BRANCH_NAME
-
-defaults = [:]
-defaults.linux     = BRANCH_NAME == 'master'
-defaults.android   = BRANCH_NAME != 'master'
-defaults.editors   = BRANCH_NAME != 'master'
-defaults.builder   = BRANCH_NAME != 'master'
-defaults.server_ce = BRANCH_NAME != 'master'
-defaults.server_ee = BRANCH_NAME != 'master'
-defaults.server_ie = BRANCH_NAME != 'master'
-defaults.server_de = BRANCH_NAME != 'master'
-defaults.cron      = 'H 17 * * *'
-
 pipeline {
 	agent none
 	parameters {
@@ -160,6 +147,19 @@ pipeline {
 	// 	}
 	// }
 }
+
+println BRANCH_NAME
+
+defaults = [:]
+defaults.linux     = BRANCH_NAME == 'master'
+defaults.android   = BRANCH_NAME != 'master'
+defaults.editors   = BRANCH_NAME != 'master'
+defaults.builder   = BRANCH_NAME != 'master'
+defaults.server_ce = BRANCH_NAME != 'master'
+defaults.server_ee = BRANCH_NAME != 'master'
+defaults.server_ie = BRANCH_NAME != 'master'
+defaults.server_de = BRANCH_NAME != 'master'
+defaults.cron      = 'H 17 * * *'
 
 def linuxBuildDesktop()
 {
