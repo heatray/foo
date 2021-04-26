@@ -75,6 +75,21 @@ pipeline {
 					// checkout scm
 					utils = load "utils.groovy"
 
+					checkout([
+						$class: 'GitSCM',
+						branches: [[name: 'master']],
+						extensions: [
+							[$class: 'CloneOption', depth: 1, shallow: true],
+							[$class: 'SubmoduleOption', depth: 1, recursiveSubmodules: true, shallow: true],
+							[$class: 'RelativeTargetDirectory', relativeTargetDir: 'test'],
+							[$class: 'ScmName', name: 'Test name'],
+							[$class: 'AuthorInChangelog']
+						],
+						userRemoteConfigs: [
+							[url: 'git@github.com:heatray/KFGimli.git']
+						]
+					])
+
 					def branchName = env.BRANCH_NAME
 					def productVersion = "99.99.99"
 					def pV = branchName =~ /^(release|hotfix)\\/v(.*)$/
