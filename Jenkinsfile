@@ -82,8 +82,7 @@ pipeline {
 							[$class: 'CloneOption', depth: 1, shallow: true],
 							[$class: 'SubmoduleOption', depth: 1, recursiveSubmodules: true, shallow: true],
 							[$class: 'RelativeTargetDirectory', relativeTargetDir: 'test'],
-							[$class: 'ScmName', name: 'Test name'],
-							[$class: 'AuthorInChangelog']
+							[$class: 'ScmName', name: 'heatray/KFGimli']
 						],
 						userRemoteConfigs: [
 							[url: 'git@github.com:heatray/KFGimli.git']
