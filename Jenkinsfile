@@ -4,13 +4,13 @@
 // }
 
 defaults = [
-	linux:           true,
-	android:         true,
-	editors:         true,
-	builder:         true,
-	server_ce:       true,
-	server_ee:       true,
-	server_de:       true,
+	linux:           false,
+	android:         false,
+	editors:         false,
+	builder:         false,
+	server_ce:       false,
+	server_ee:       false,
+	server_de:       false,
 	cron:            'H 17 * * *'
 ]
 
