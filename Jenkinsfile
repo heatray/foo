@@ -1,7 +1,7 @@
-node('master') {
-	checkout scm
-	utils = load "utils.groovy"	
-}
+// node('master') {
+// 	checkout scm
+// 	utils = load "utils.groovy"	
+// }
 
 defaults = [
 	linux:           true,
@@ -72,6 +72,9 @@ pipeline {
 		stage('Prepare') {
 			steps {
 				script {
+					checkout scm
+					utils = load "utils.groovy"
+
 					def branchName = env.BRANCH_NAME
 					def productVersion = "99.99.99"
 					def pV = branchName =~ /^(release|hotfix)\\/v(.*)$/
