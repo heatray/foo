@@ -22,7 +22,7 @@ if ('master' == BRANCH_NAME) {
 }
 
 pipeline {
-	agent none
+	agent { label 'master' }
 	parameters {
 		booleanParam (
 			defaultValue: false,
@@ -72,7 +72,7 @@ pipeline {
 		stage('Prepare') {
 			steps {
 				script {
-					checkout scm
+					// checkout scm
 					utils = load "utils.groovy"
 
 					def branchName = env.BRANCH_NAME
