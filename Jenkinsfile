@@ -1,22 +1,24 @@
-checkout scm
-utils = load "utils.groovy"
+node('master') {
+	checkout scm
+	utils = load "utils.groovy"	
+}
 
 defaults = [
-  linux:           true,
-  android:         true,
-  editors:         true,
-  builder:         true,
-  server_ce:       true,
-  server_ee:       true,
-  server_de:       true,
-  cron:            'H 17 * * *'
+	linux:           true,
+	android:         true,
+	editors:         true,
+	builder:         true,
+	server_ce:       true,
+	server_ee:       true,
+	server_de:       true,
+	cron:            'H 17 * * *'
 ]
 
 if ('master' == BRANCH_NAME) {
-  defaults.putAll([
-    linux:         true,
-    editors:       true
-  ])
+	defaults.putAll([
+		linux:         true,
+		editors:       true
+	])
 }
 
 pipeline {
