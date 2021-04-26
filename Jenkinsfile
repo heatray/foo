@@ -1,15 +1,23 @@
-println BRANCH_NAME
+checkout scm
+utils = load "utils.groovy"
 
-defaults = [:]
-defaults.linux     = BRANCH_NAME == 'master'
-defaults.android   = BRANCH_NAME != 'master'
-defaults.editors   = BRANCH_NAME != 'master'
-defaults.builder   = BRANCH_NAME != 'master'
-defaults.server_ce = BRANCH_NAME != 'master'
-defaults.server_ee = BRANCH_NAME != 'master'
-defaults.server_ie = BRANCH_NAME != 'master'
-defaults.server_de = BRANCH_NAME != 'master'
-defaults.cron      = 'H 17 * * *'
+defaults = [
+  linux:           true,
+  android:         true,
+  editors:         true,
+  builder:         true,
+  server_ce:       true,
+  server_ee:       true,
+  server_de:       true,
+  cron:            'H 17 * * *'
+]
+
+if ('master' == BRANCH_NAME) {
+  defaults.putAll([
+    linux:         true,
+    editors:       true
+  ])
+}
 
 pipeline {
 	agent none
@@ -48,11 +56,6 @@ pipeline {
 			defaultValue: defaults.server_ee,
 			description: 'Build and publish DocumentServer-EE packages',
 			name: 'documentserver_ee'
-		)
-		booleanParam (
-			defaultValue: defaults.server_ie,
-			description: 'Build and publish DocumentServer-IE packages',
-			name: 'documentserver_ie'
 		)
 		booleanParam (
 			defaultValue: defaults.server_de,
