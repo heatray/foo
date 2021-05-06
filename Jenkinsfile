@@ -113,6 +113,8 @@ pipeline {
 					deployServerIeList = []
 					deployServerDeList = []
 					deployAndroidList = []
+
+					currentBuild.properties.each { println "$it.key -> $it.value" }
 				}
 			}
 		}
