@@ -21,6 +21,10 @@ if ('master' == BRANCH_NAME) {
 	])
 }
 
+println BRANCH_NAME.startsWith('hotfix')
+println BRANCH_NAME.startsWith('release')
+
+
 pipeline {
 	agent { label 'master' }
 	parameters {
