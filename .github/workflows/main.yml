@@ -8,6 +8,5 @@ jobs:
     - name: curl
       uses: wei/curl@v1
       with:
-        args:
-          - "-L"
-          - "ident.me"
+        args: -L \
+          ident.me
