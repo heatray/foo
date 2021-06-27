@@ -79,6 +79,8 @@ pipeline {
 					// checkout scm
 					utils = load "utils.groovy"
 
+					println utils.listRepos
+
 					checkout([
 						$class: 'GitSCM',
 						branches: [[name: 'master']],

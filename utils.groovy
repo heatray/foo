@@ -20,4 +20,10 @@ def checkoutRepo(String repo, String branch = 'master', String dir = repo, Strin
     )
 }
 
+ArrayList listRepos = [
+  [owner: 'heatray', name: 'foo'],
+  [owner: 'heatray', name: 'bar'],
+  [owner: 'heatray', name: 'baz']
+]
+
 return this
