@@ -269,16 +269,14 @@ def getHtml(ArrayList data) {
 	data.groupBy { it.platform }.each { platform, sections ->
 		text += "\n  <h2>${platform}</h2>"
 		sections.groupBy { it.section }.each { section, files ->
-			text += "\n  <dl>"
-			text += "\n    <dt>${section}</dt>"
+			text += "\n  <h3>${section}</h3>"
 			files.each {
 				url = "https://s3.eu-west-1.amazonaws.com/${it.path}"
 				size = sh (script: "LANG=C numfmt --to=iec ${it.size}",
 					returnStdout: true).trim()
-				text += "\n    <dd><a href=\"${url}\">${it.file}</a>" \
-					+ " (${size}) md5:<code>${it.md5}</code></dd>"
+				text += "\n  <p><a href=\"${url}\">${it.file}</a>" \
+					+ " <small>(${size})</small> md5: <code>${it.md5}</code></p>"
 			}
-			text += "\n  </dl>"
 		}
 	}
 	text += "\n</body>\n</html>"
