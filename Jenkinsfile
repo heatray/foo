@@ -24,6 +24,11 @@ if (BRANCH_NAME == 'master') {
 
 pipeline {
 	agent none
+	environment {
+		COMPANY_NAME = 'ONLYOFFICE'
+		RELEASE_BRANCH = 'stable'
+		PRODUCT_VERSION = '1.0.0'
+	}
 	parameters {
 		booleanParam (
 			defaultValue: false,
@@ -81,7 +86,6 @@ pipeline {
 					if (pV.find()) productVersion = pV.group(2)
 
 					env.PRODUCT_VERSION = productVersion
-					env.RELEASE_BRANCH = 'testing'
 					if (params.signing) env.ENABLE_SIGNING=1
 
 					deployMap = []
