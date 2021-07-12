@@ -137,8 +137,9 @@ def buildEditors (String platform) {
 	if (platform == "linux") {
 
 		sh """
-			mkdir -p desktop-apps/win-linux/package/linux/{deb,rpm,apt-rpm,urpmi,tar}
+			mkdir -pv desktop-apps/win-linux/package/linux
 			cd desktop-apps/win-linux/package/linux
+			mkdir -pv deb rpm apt-rpm urpmi tar
 
 			fallocate -l 10M deb/onlyoffice-desktopeditors_6.4.0-58_amd64.deb
 			fallocate -l 11M rpm/onlyoffice-desktopeditors-6.4.0-58.x86_64.rpm
