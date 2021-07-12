@@ -122,7 +122,7 @@ pipeline {
 		}
 	}
 	post {
-		always {
+		success {
 			node('master') {
 				script {
 					createReports()
@@ -164,7 +164,7 @@ def buildEditors (String platform) {
 	}
 
 	files.each {
-		deployList.add([
+		deployMap.add([
 			product: "editors",
 			title: platform,
 			section: it.key,
@@ -179,17 +179,18 @@ def buildEditors (String platform) {
 // Deploy
 
 def uploadFiles(String glob, String dest) {
-	GString cmdUpload = "echo cp ${->it.path} s3://repo-doc-onlyoffice-com/" \
-	  + "${env.COMPANY_NAME.toLowerCase()}/${env.RELEASE_BRANCH}/${->dest}"
-	GString cmdMd5sum = "md5sum ${->it.path} | cut -f 1 -d ' '"
-	String md5sum = ''
+	String cmdUpload, cmdMd5sum, s3uri, md5sum
 	ArrayList ret = []
 
 	findFiles(glob: glob).each {
-		if (dest.endsWith('/')) cmdUpload += "${it.name}"
+		s3uri = "repo-doc-onlyoffice-com/${env.COMPANY_NAME.toLowerCase()}" \
+			+ "/${env.RELEASE_BRANCH}/${dest}${dest.endsWith('/') ? it.name : ''}"
+		cmdUpload = "echo cp ${it.path} s3://${s3uri}"
 
 		if (isUnix()) sh  cmdUpload
 		else          bat cmdUpload
+
+		cmdMd5sum = "md5sum ${it.path} | cut -f 1 -d ' '"
 
 		if (isUnix()) md5sum = sh (script: cmdMd5sum, returnStdout: true)
 		else          md5sum = bat (script: cmdMd5sum, returnStdout: true)
