@@ -186,7 +186,7 @@ def uploadFiles(String glob, String dest) {
 	ArrayList ret = []
 
 	findFiles(glob: glob).each {
-		if (dest.endsWith('/')) s3uri += "${it.name}"
+		if (dest.endsWith('/')) cmdUpload += "${it.name}"
 
 		if (isUnix()) sh  cmdUpload
 		else          bat cmdUpload
