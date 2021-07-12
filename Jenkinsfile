@@ -85,8 +85,6 @@ pipeline {
 					if (params.signing) env.ENABLE_SIGNING=1
 
 					deployMap = []
-
-					currentBuild.properties.each { println "$it.key -> $it.value" }
 				}
 			}
 		}
