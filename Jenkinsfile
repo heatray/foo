@@ -267,17 +267,28 @@ def getHtml(ArrayList data) {
 		+ "\n  <link rel=\"stylesheet\" href=\"custom.css\">" \
 		+ "\n<head>\n<body>"
 	data.groupBy { it.platform }.each { platform, sections ->
-		text += "\n  <h2>${platform}</h2>"
+		text += "\n  <h3>${platform}</h3>"
+		text += "\n  <table width=\"100%\">"
 		sections.groupBy { it.section }.each { section, files ->
-			text += "\n  <h3>${section}</h3>"
+			text += "\n    <thead>"
+			text += "\n      <tr>"
+			text += "\n        <th align=\"left\" colspan=\"3\">${section}</th>"
+			text += "\n      </tr>"
+			text += "\n    </thead>"
+			text += "\n    <tbody>"
 			files.each {
 				url = "https://s3.eu-west-1.amazonaws.com/${it.path}"
 				size = sh (script: "LANG=C numfmt --to=iec ${it.size}",
 					returnStdout: true).trim()
-				text += "\n  <p><a href=\"${url}\">${it.file}</a>" \
-					+ " <small>(${size})</small> md5: <code>${it.md5}</code></p>"
+				text += "\n      <tr>"
+				text += "\n        <td><b><a href=\"${url}\">${it.file}</a></b></td>"
+				text += "\n        <td>${size}B</td>"
+				text += "\n        <td>md5: <code>${it.md5}</code></td>"
+				text += "\n      </tr>"
 			}
+			text += "\n    </tbody>"
 		}
+		text += "\n  </table>"
 	}
 	text += "\n</body>\n</html>"
 
