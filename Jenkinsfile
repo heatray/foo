@@ -164,15 +164,17 @@ def buildEditors (String platform) {
 	}
 
 	files.each {
-		deployMap.add([
-			product: "editors",
-			title: platform,
-			section: it.key,
-			path: it.value.path,
-			file: it.value.file,
-			size: it.value.size,
-			md5: it.value.md5
-		])
+		it.value.each { file ->
+			deployMap.add([
+				product: "editors",
+				platform: platform,
+				section: it.key,
+				path: file.path,
+				file: file.file,
+				size: file.size,
+				md5: file.md5
+			])
+		}
 	}
 }
 
@@ -264,17 +266,17 @@ def getHtml(ArrayList data) {
 		+ "\n  <link rel=\"stylesheet\" href=\"style.css\">" \
 		+ "\n  <link rel=\"stylesheet\" href=\"custom.css\">" \
 		+ "\n<head>\n<body>"
-	data.groupBy { it.platform }.each {
-		text += "\n  <h2>${it.key}</h2>"
-		it.value.groupBy { it.section }.each {
+	data.groupBy { it.platform }.each { platform, sections ->
+		text += "\n  <h2>${platform}</h2>"
+		sections.groupBy { it.section }.each { section, files ->
 			text += "\n  <dl>"
-			text += "\n    <dt>${it.key}</dt>"
-			it.value.each {
+			text += "\n    <dt>${section}</dt>"
+			files.each {
 				url = "https://s3.eu-west-1.amazonaws.com/${it.path}"
 				size = sh (script: "LANG=C numfmt --to=iec ${it.size}",
 					returnStdout: true).trim()
-				text += "\n    <dd><a href=\"${url}\">" \
-					+ "${it.file} (${size}) md5:<code>${it.md5}</code></dd>"
+				text += "\n    <dd><a href=\"${url}\">${it.file}</a>" \
+					+ " (${size}) md5:<code>${it.md5}</code></dd>"
 			}
 			text += "\n  </dl>"
 		}
