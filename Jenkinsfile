@@ -179,21 +179,20 @@ def buildEditors (String platform) {
 // Deploy
 
 def uploadFiles(String glob, String dest) {
-	String cmdUpload = "echo cp %s s3://%s"
-	String cmdMd5 = "md5sum %s | cut -f 1 -d ' '"
-	String s3uri, md5sum
+	GString cmdUpload = "echo cp ${->it.path} s3://repo-doc-onlyoffice-com/" \
+	  + "${env.COMPANY_NAME.toLowerCase()}/${env.RELEASE_BRANCH}/${->dest}"
+	GString cmdMd5sum = "md5sum ${->it.path} | cut -f 1 -d ' '"
+	String md5sum = ''
 	ArrayList ret = []
 
 	findFiles(glob: glob).each {
-		s3uri = "repo-doc-onlyoffice-com/${env.COMPANY_NAME.toLowerCase()}/" \
-			+ "${env.RELEASE_BRANCH}/${dest}"
 		if (dest.endsWith('/')) s3uri += "${it.name}"
 
-		if (isUnix()) sh  sprintf(cmdUpload, [it.path, s3uri])
-		else          bat sprintf(cmdUpload, [it.path, s3uri])
+		if (isUnix()) sh  cmdUpload
+		else          bat cmdUpload
 
-		if (isUnix()) md5sum = sh (script: sprintf(cmdMd5, it.path), returnStdout: true)
-		else          md5sum = bat (script: sprintf(cmdMd5, it.path), returnStdout: true)
+		if (isUnix()) md5sum = sh (script: cmdMd5sum, returnStdout: true)
+		else          md5sum = bat (script: cmdMd5sum, returnStdout: true)
 
 		ret.add([
 			path: s3uri,
