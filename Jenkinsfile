@@ -1,7 +1,7 @@
-// node('master') {
-// 	checkout scm
-// 	utils = load "utils.groovy"	
-// }
+node('master') {
+	checkout scm
+	utils = load "utils.groovy"	
+}
 
 defaults = [
 	linux:           false,
@@ -11,110 +11,80 @@ defaults = [
 	server_ce:       false,
 	server_ee:       false,
 	server_de:       false,
+	libs:            false,
 	cron:            'H 17 * * *'
 ]
 
-if ('master' == BRANCH_NAME) {
+if (BRANCH_NAME == 'master') {
 	defaults.putAll([
 		linux:         true,
 		editors:       true
 	])
 }
 
-println BRANCH_NAME.startsWith('hotfix')
-println BRANCH_NAME.startsWith('release')
-
-
 pipeline {
-	agent { label 'master' }
+	agent none
 	parameters {
 		booleanParam (
 			defaultValue: false,
-			description: 'Wipe out current workspace',
-			name: 'wipe'
+			description:  'Wipe out current workspace',
+			name:         'wipe'
 		)
 		booleanParam (
 			defaultValue: defaults.linux,
-			description: 'Build Linux x64 targets',
-			name: 'linux_64'
+			description:  'Build Linux x64 targets',
+			name:         'linux_64'
 		)
 		booleanParam (
 			defaultValue: defaults.android,
-			description: 'Build Android targets',
-			name: 'android'
+			description:  'Build Android targets',
+			name:         'android'
 		)
 		booleanParam (
 			defaultValue: defaults.editors,
-			description: 'Build and publish DesktopEditors packages',
-			name: 'desktopeditor'
+			description:  'Build and publish DesktopEditors packages',
+			name:         'editors'
 		)
 		booleanParam (
 			defaultValue: defaults.builder,
-			description: 'Build and publish DocumentBuilder packages',
-			name: 'documentbuilder'
+			description:  'Build and publish DocumentBuilder packages',
+			name:         'builder'
 		)
 		booleanParam (
 			defaultValue: defaults.server_ce,
-			description: 'Build and publish DocumentServer packages',
-			name: 'documentserver'
+			description:  'Build and publish DocumentServer packages',
+			name:         'server_ce'
 		)
 		booleanParam (
 			defaultValue: defaults.server_ee,
-			description: 'Build and publish DocumentServer-EE packages',
-			name: 'documentserver_ee'
+			description:  'Build and publish DocumentServer-EE packages',
+			name:         'server_ee'
 		)
 		booleanParam (
 			defaultValue: defaults.server_de,
-			description: 'Build and publish DocumentServer-DE packages',
-			name: 'documentserver_de'
+			description:  'Build and publish DocumentServer-DE packages',
+			name:         'server_de'
 		)
-	}
-	triggers {
-		cron(defaults.cron)
+		booleanParam (
+			defaultValue: defaults.libs,
+			description:  'Build and publish Android libs packages',
+			name:         'libs'
+		)
 	}
 	stages {
 		stage('Prepare') {
 			steps {
 				script {
-					// checkout scm
-					utils = load "utils.groovy"
-
-					println utils.listRepos
-
-					checkout([
-						$class: 'GitSCM',
-						branches: [[name: 'master']],
-						extensions: [
-							[$class: 'CloneOption', depth: 1, shallow: true],
-							[$class: 'SubmoduleOption', depth: 1, recursiveSubmodules: true, shallow: true],
-							[$class: 'RelativeTargetDirectory', relativeTargetDir: 'test'],
-							[$class: 'ScmName', name: 'heatray/KFGimli']
-						],
-						userRemoteConfigs: [
-							[url: 'git@github.com:heatray/KFGimli.git']
-						]
-					])
-
 					def branchName = env.BRANCH_NAME
 					def productVersion = "99.99.99"
 					def pV = branchName =~ /^(release|hotfix)\\/v(.*)$/
-					if(pV.find()) {
-						productVersion = pV.group(2)
-					}
+					if (pV.find()) productVersion = pV.group(2)
+
 					env.PRODUCT_VERSION = productVersion
 					env.RELEASE_BRANCH = 'testing'
+					if (params.signing) env.ENABLE_SIGNING=1
 
-					if( params.signing ) {
-						env.ENABLE_SIGNING=1
-					}
-
-					deployDesktopList = []
-					deployBuilderList = []
-					deployServerCeList = []
-					deployServerEeList = []
-					deployServerIeList = []
-					deployServerDeList = []
-					deployAndroidList = []
+					deployMap = []
 
 					currentBuild.properties.each { println "$it.key -> $it.value" }
 				}
@@ -130,353 +100,183 @@ pipeline {
 					}
 					steps {
 						script {
-							if ( params.wipe ) {
+							if (params.wipe) {
 								deleteDir()
 								checkout scm
 							}
 
-							if (params.documentbuilder) {
-								linuxBuildBuilder()
-							}
-							if (params.desktopeditor) {
-								linuxBuildDesktop()
-							}
-							if (params.documentserver) {
-								linuxBuildServer()
-							}
-							if (params.documentserver_ee) {
-								linuxBuildServer("documentserver-ee")
-							}
-							if (params.documentserver_ie) {
-								linuxBuildServer("documentserver-ie")
-							}
-							if (params.documentserver_de) {
-								linuxBuildServer("documentserver-de")
-							}
-							if (params.android) {
-								androidBuild()
-							}
+							String platform = "linux"
+
+							if (params.editors)   buildEditors(platform)
+							// if (params.builder)   buildBuilder(platform)
+							// if (params.server_ce) buildServer(platform)
+							// if (params.server_ee) buildServer(platform, "enterprise")
+							// if (params.server_de) buildServer(platform, "developer")
+							// if (params.android)   buildAndroid(platform)
 						}
 					}
 				}
 			}
 		}
 	}
-	// post {
-	// 	always {
-	// 		node('master') {
-	// 			script {
-	// 				checkout scm
-	// 				createReports()
-	// 			}
-	// 		}
-	// 		script {
-	// 			if (params.linux_64 && (
-	// 				params.desktopeditor ||
-	// 				params.documentbuilder ||
-	// 				params.documentserver_ee ||
-	// 				params.documentserver_ie ||
-	// 				params.documentserver_de)
-	// 			) {
-	// 				build (
-	// 					job: 'tokenitem',
-	// 					parameters: [
-	// 						string (name: 'stringy', value: env.RELEASE_BRANCH)
-	// 					],
-	// 					wait: false
-	// 				)
-	// 			}
-	// 		}
-	// 	}
-	// }
-}
-
-def linuxBuildDesktop()
-{
-	sh """#!/bin/bash -xe
-		echo desktop
-		cat <<- EOF > linuxdesktopdeploy.json
-			{
-				"product": "desktopeditors",
-				"title": "ONLYOFFICE Desktop Editors"
-				"version": "6.1.0",
-				"build": "90",
-				"items": [
-					{
-						"platform": "ubuntu",
-						"title": "Debian 8 9, Ubuntu 14.04 16.04 18.04 and derivatives",
-						"path": "onlyoffice/ubuntu/package.deb",
-						"size": "250 MB"
-					},
-					{
-						"platform": "centos",
-						"title": "Centos 7, Redhat 7, Fedora latest and derivatives",
-						"path": "onlyoffice/centos/package.rpm",
-						"size": "250 MB"
-					},
-					{
-						"platform": "linux",
-						"title": "Linux portable",
-						"path": "onlyoffice/linux/package.tar.gz",
-						"size": "250 MB"
-					}
-				],
-				"appcast": "<path>",
-				"changes": [
-					"en": "<path>"
-					"ru": "<path>"
-				]
+	post {
+		always {
+			node('master') {
+				script {
+					createReports()
+				}
 			}
-		EOF
-	"""
-
-	// def deployData = readJSON file: 'linuxdesktopdeploy.json'
-
-	// for(item in deployData.items) {
-	// 	println item
-	// 	deployDesktopList.add(item)
-	// }
-
-	return this
+		}
+	}
 }
 
-def linuxBuildBuilder()
-{
-	sh """#!/bin/bash -xe
-		echo builder
-		cat <<- EOF > linuxbuilderdeploy.json
-			{
-				"product": "documentbuilder",
-				"version": "6.1.0",
-				"build": "90",
-				"items": [
-					{
-						"platform": "ubuntu",
-						"title": "Debian 8 9, Ubuntu 14.04 16.04 18.04 and derivatives",
-						"path": "a/package.deb"
-					},
-					{
-						"platform": "centos",
-						"title": "Centos 7, Redhat 7, Fedora latest and derivatives",
-						"path": "b/package.rpm"
-					},
-					{
-						"platform": "linux",
-						"title": "Linux portable",
-						"path": "c/package.tar.gz"
-					}
-				]
-			}
-		EOF
-	"""
+// Build Packages
 
-	// def deployData = readJSON file: 'linuxbuilderdeploy.json'
+def buildEditors (String platform) {
+	String version = env.PRODUCT_VERSION + "-" + env.BUILD_NUMBER
+	Map files = [:]
 
-	// for(item in deployData.items) {
-	// 	println item
-	// 	deployBuilderList.add(item)
-	// }
+	if (platform == "linux") {
 
-	return this
-}
+		sh """
+			mkdir -p desktop-apps/win-linux/package/linux/{deb,rpm,apt-rpm,urpmi,tar}
+			cd desktop-apps/win-linux/package/linux
 
-def linuxBuildServer(String productName='documentserver')
-{
-	sh """#!/bin/bash -xe
-		echo ${productName}
-		cat <<- EOF > linux${productName}deploy.json
-			{
-				"product": "${productName}",
-				"version": "6.1.0",
-				"build": "90",
-				"items": [
-					{
-						"platform": "ubuntu",
-						"title": "Debian 8 9, Ubuntu 14.04 16.04 18.04 and derivatives",
-						"path": "a"
-					},
-					{
-						"platform": "centos",
-						"title": "Centos 7, Redhat 7, Fedora latest and derivatives",
-						"path": "b"
-					},
-					{
-						"platform": "linux",
-						"title": "Linux portable",
-						"path": "c"
-					}
-				]
-			}
-		EOF
-	"""
+			fallocate -l 10M deb/onlyoffice-desktopeditors_6.4.0-58_amd64.deb
+			fallocate -l 11M rpm/onlyoffice-desktopeditors-6.4.0-58.x86_64.rpm
+			fallocate -l 12M apt-rpm/onlyoffice-desktopeditors-6.4.0-58.x86_64.rpm
+			fallocate -l 13M urpmi/onlyoffice-desktopeditors-6.4.0-58.x86_64.rpm
+			fallocate -l 14M tar/onlyoffice-desktopeditors-6.4.0-58-x64.tar.gz
+		"""
 
-	// def deployData = readJSON file: "linux${productName}deploy.json"
+		dir ("desktop-apps/win-linux/package/linux") {
+			files."Ubuntu"     = uploadFiles("deb/*.deb",        "ubuntu/")
+			files."CentOS"     = uploadFiles("rpm/**/*.rpm",     "centos/")
+			files."AltLinux"   = uploadFiles("apt-rpm/**/*.rpm", "altlinux/")
+			files."Rosa"       = uploadFiles("urpmi/**/*.rpm",   "rosa/")
+			files."Portable"   = uploadFiles("tar/*.tar.gz",     "linux/")
+			// files."AstraLinux" = uploadFiles("deb-astra/*.deb", "astralinux/")
+		}
 
-	// for(item in deployData.items) {
-	// 	println item
-	// 	switch(productName) {
-	// 		case 'documentserver':
-	// 			deployServerCeList.add(item)
-	// 			break
-	// 		case 'documentserver-ee':
-	// 			deployServerEeList.add(item)
-	// 			break
-	// 		case 'documentserver-ie':
-	// 			deployServerIeList.add(item)
-	// 			break
-	// 		case 'documentserver-de':
-	// 			deployServerDeList.add(item)
-	// 			break
-	// 	}
-	// }
-
-	return this
-}
-
-def androidBuild()
-{
-	sh """#!/bin/bash -xe
-		echo android
-		cat <<- EOF > android.json
-			{
-				"product": "android",
-				"version": "6.1.0",
-				"build": "90",
-				"items": [
-					{
-						"platform": "android",
-						"title": "Android libs",
-						"path": "http://a"
-					}
-				]
-			}
-		EOF
-	"""
-
-	// String androidLibsFile = "android-libs-${env.PRODUCT_VERSION}-${env.BUILD_NUMBER}.zip"
-	// String androidLibsUri = "onlyoffice/${env.RELEASE_BRANCH}/android/${androidLibsFile}"
-	// def deployData = [platform: 'android', title: 'Android libs', path: androidLibsUri]
-
-	// println deployData
-	// deployAndroidList.add(deployData)
-
-	return this
-}
-
-def createReports()
-{
-	Boolean desktop = !deployDesktopList.isEmpty()
-	Boolean builder = !deployBuilderList.isEmpty()
-	Boolean serverc = !deployServerCeList.isEmpty()
-	Boolean servere = !deployServerEeList.isEmpty() 
-	Boolean serverd = !deployServerDeList.isEmpty()
-	Boolean android = !deployAndroidList.isEmpty()
-
-	dir ('html') {
-		deleteDir()
-
-		sh "wget -nv https://unpkg.com/style.css -O style.css"
-		sh "echo \"body { margin: 16px; }\" > custom.css"
-
-		if (desktop) { writeFile file: 'desktopeditors.html', text: genHtml(deployDesktopList) }
-		if (builder) { writeFile file: 'documentbuilder.html', text: genHtml(deployBuilderList) }
-		if (serverc) { writeFile file: 'documentserver_ce.html', text: genHtml(deployServerCeList) }
-		if (servere) { writeFile file: 'documentserver_ee.html', text: genHtml(deployServerEeList) }
-		if (serverd) { writeFile file: 'documentserver_de.html', text: genHtml(deployServerDeList) }
-		if (android) { writeFile file: 'android.html', text: genHtml(deployAndroidList) }
 	}
 
-	if (desktop) {
-		publishHTML([
-			allowMissing: false,
-			alwaysLinkToLastBuild: false,
-			includes: 'desktopeditors.html,*.css',
-			keepAll: true,
-			reportDir: 'html',
-			reportFiles: 'desktopeditors.html',
-			reportName: "DesktopEditors",
-			reportTitles: ''
+	files.each {
+		deployList.add([
+			product: "editors",
+			title: platform,
+			section: it.key,
+			path: it.value.path,
+			file: it.value.file,
+			size: it.value.size,
+			md5: it.value.md5
 		])
 	}
-	
-	if (builder) {
-		publishHTML([
-			allowMissing: false,
-			alwaysLinkToLastBuild: false,
-			includes: 'documentbuilder.html,*.css',
-			keepAll: true,
-			reportDir: 'html',
-			reportFiles: 'documentbuilder.html',
-			reportName: "DocumentBuilder",
-			reportTitles: ''
-		])
-	}
-
-	if (serverc || servere || serverd) {
-		// compatibility for htmlpublisher-1.18
-		def serverIndexFiles = []
-		if (serverc) { serverIndexFiles.add('documentserver_ce.html') }
-		if (servere) { serverIndexFiles.add('documentserver_ee.html') }
-		if (serverd) { serverIndexFiles.add('documentserver_de.html') }
-
-		publishHTML([
-			allowMissing: false,
-			alwaysLinkToLastBuild: false,
-			includes: 'documentserver_*.html,*.css',
-			keepAll: true,
-			reportDir: 'html',
-			reportFiles: serverIndexFiles.join(','),
-			// reportFiles: 'documentserver_*.html',
-			reportName: "DocumentServer",
-			reportTitles: ''
-		])
-	}
-
-	if (android) {
-		publishHTML([
-			allowMissing: false,
-			alwaysLinkToLastBuild: false,
-			includes: 'android.html,*.css',
-			keepAll: true,
-			reportDir: 'html',
-			reportFiles: 'android.html',
-			reportName: "Android",
-			reportTitles: ''
-		])
-	}
-
-	return this
 }
 
-def genHtml(ArrayList deployList)
-{
-	String url = ''
-	String filename = ''
-	String html = """\
-		|<html>
-		|<head>
-		|	<link rel="stylesheet" href="style.css">
-		|	<link rel="stylesheet" href="custom.css">
-		|<head>
-		|<body>
-		|	<h2>${deployList.title} <small>${env.PRODUCT_VERSION}-${env.BUILD_NUMBER}</small></h2>
-		|	<dl>
-		|""".stripMargin()
+// Deploy
 
-	for(p in deployList) {
-		url = "https://${env.S3_BUCKET}.s3-eu-west-1.amazonaws.com/${p.path}"
-		filename = p.path.substring(p.path.lastIndexOf("/") + 1)
-		html += """\
-			|		<dt>${p.title}</dt>
-			|		<dd><a href="${url}" target="_blank">${filename}</a> (${p.size})</dd>
-			|""".stripMargin()
+def uploadFiles(String glob, String dest) {
+	String cmdUpload = "echo cp %s s3://%s"
+	String cmdMd5 = "md5sum %s | cut -f 1 -d ' '"
+	String s3uri, md5sum
+	ArrayList ret = []
+
+	findFiles(glob: glob).each {
+		s3uri = "repo-doc-onlyoffice-com/${env.COMPANY_NAME.toLowerCase()}/" \
+			+ "${env.RELEASE_BRANCH}/${dest}"
+		if (dest.endsWith('/')) s3uri += "${it.name}"
+
+		if (isUnix) sh  printf(cmdUpload, [it.path, s3uri])
+		else        bat printf(cmdUpload, [it.path, s3uri])
+
+		if (isUnix) md5sum = sh (script: printf(cmdMd5, it.path), returnStdout: true)
+		else        md5sum = bat (script: printf(cmdMd5, it.path), returnStdout: true)
+
+		ret.add([
+			path: s3uri,
+			file: it.name,
+			size: it.length,
+			md5: md5sum.trim()
+		])
+
+		if (!dest.endsWith('/')) break
 	}
 
-	html += """\
-		|	</dl>
-		|</body>
-		|</html>
-		|""".stripMargin()
+	return ret
+}
 
-	return html
+def createReports() {
+	Map deploy = deployMap.groupBy { it.product }
+
+	Boolean editors = deploy.editors != null
+	Boolean builder = deploy.builder != null
+	Boolean server_ce = deploy.server_ce != null
+	Boolean server_ee = deploy.server_ee != null
+	Boolean server_de = deploy.server_de != null
+	Boolean android = deploy.android != null
+
+	dir ("html") {
+		sh """
+			rm -fv *.html
+			test -f style.css || wget -nv https://unpkg.com/style.css -O style.css
+			test -f custom.css || echo \"body { margin: 16px; }\" > custom.css
+		"""
+
+		if (editors)
+			writeReports("DesktopEditors", ["editors.html": deploy.editors])
+		if (builder)
+			writeReports("DocumentBuilder", ["builder.html": deploy.builder])
+		if (server_ce || server_ee || server_de) {
+			Map serverReports
+			if (server_ce) serverReports."server_ce.html" = deploy.server_ce
+			if (server_ee) serverReports."server_ee.html" = deploy.server_ee
+			if (server_de) serverReports."server_de.html" = deploy.server_de
+			writeReports("DocumentServer", serverReports)
+		}
+		if (android)
+			writeReports("Android", ["android.html": deploy.android])
+	}
+}
+
+def writeReports(String title, Map files) {
+	files.each {
+		writeFile file: it.key, text: getHtml(it.value)
+	}
+	publishHTML([
+		allowMissing: false,
+		alwaysLinkToLastBuild: false,
+		includes: files.collect({ it.key }).join(',') + ",*.css",
+		keepAll: true,
+		reportDir: '',
+		reportFiles: files.collect({ it.key }).join(','),
+		reportName: title,
+		reportTitles: ''
+	])
+}
+
+def getHtml(ArrayList data) {
+	String text, url, size
+
+	text = "<html>\n<head>" \
+		+ "\n  <link rel=\"stylesheet\" href=\"style.css\">" \
+		+ "\n  <link rel=\"stylesheet\" href=\"custom.css\">" \
+		+ "\n<head>\n<body>"
+	data.groupBy { it.platform }.each {
+		text += "\n  <h2>${it.key}</h2>"
+		it.value.groupBy { it.section }.each {
+			text += "\n  <dl>"
+			text += "\n    <dt>${it.key}</dt>"
+			it.value.each {
+				url = "https://s3.eu-west-1.amazonaws.com/${it.path}"
+				size = sh (script: "LANG=C numfmt --to=iec ${it.size}",
+					returnStdout: true).trim()
+				text += "\n    <dd><a href=\"${url}\">" \
+					+ "${it.file} (${size}) md5:<code>${it.md5}</code></dd>"
+			}
+			text += "\n  </dl>"
+		}
+	}
+	text += "\n</body>\n</html>"
+
+	return text
 }
