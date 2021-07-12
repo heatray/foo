@@ -189,11 +189,11 @@ def uploadFiles(String glob, String dest) {
 			+ "${env.RELEASE_BRANCH}/${dest}"
 		if (dest.endsWith('/')) s3uri += "${it.name}"
 
-		if (isUnix) sh  printf(cmdUpload, [it.path, s3uri])
-		else        bat printf(cmdUpload, [it.path, s3uri])
+		if (isUnix()) sh  printf(cmdUpload, [it.path, s3uri])
+		else          bat printf(cmdUpload, [it.path, s3uri])
 
-		if (isUnix) md5sum = sh (script: printf(cmdMd5, it.path), returnStdout: true)
-		else        md5sum = bat (script: printf(cmdMd5, it.path), returnStdout: true)
+		if (isUnix()) md5sum = sh (script: printf(cmdMd5, it.path), returnStdout: true)
+		else          md5sum = bat (script: printf(cmdMd5, it.path), returnStdout: true)
 
 		ret.add([
 			path: s3uri,
