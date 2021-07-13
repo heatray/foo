@@ -107,7 +107,7 @@ pipeline {
 								checkout scm
 							}
 
-							String platform = "linux"
+							String platform = "linux_64"
 
 							if (params.editors)   buildEditors(platform)
 							// if (params.builder)   buildBuilder(platform)
@@ -134,10 +134,12 @@ pipeline {
 
 // Build Packages
 
-def buildEditors (String platform) {
+void buildEditors (String platform) {
 	String version = env.PRODUCT_VERSION + "-" + env.BUILD_NUMBER
+	String product = "editors"
 
-	if (platform == "linux") {
+	if (platform == "linux_64") {
+		String section = "Linux x64"
 
 		sh """
 			mkdir -pv desktop-apps/win-linux/package/linux
@@ -152,15 +154,17 @@ def buildEditors (String platform) {
 		"""
 
 		dir ("desktop-apps/win-linux/package/linux") {
-			uploadFiles("deb/*.deb",        "ubuntu/",   "editors", "Linux x64", "Ubuntu")
-			uploadFiles("rpm/**/*.rpm",     "centos/",   "editors", "Linux x64", "CentOS")
-			uploadFiles("apt-rpm/**/*.rpm", "altlinux/", "editors", "Linux x64", "AltLinux")
-			uploadFiles("urpmi/**/*.rpm",   "rosa/",     "editors", "Linux x64", "Rosa")
-			uploadFiles("tar/*.tar.gz",     "linux/",    "editors", "Linux x64", "Portable")
-			// uploadFiles("deb-astra/*.deb",  "astralinux/", "editors", "Linux x64", "AstraLinux")
+			uploadFiles("deb/*.deb",        "ubuntu/",   product, section, "Ubuntu")
+			uploadFiles("rpm/**/*.rpm",     "centos/",   product, section, "CentOS")
+			uploadFiles("apt-rpm/**/*.rpm", "altlinux/", product, section, "AltLinux")
+			uploadFiles("urpmi/**/*.rpm",   "rosa/",     product, section, "Rosa")
+			uploadFiles("tar/*.tar.gz",     "linux/",    product, section, "Portable")
+			// uploadFiles("deb-astra/*.deb",  "astralinux/", product, section, "AstraLinux")
 		}
 
 	}
+
+	String section = "Windows x64"
 
 	sh """
 		mkdir -pv desktop-apps/win-linux/package/windows/update
@@ -175,16 +179,16 @@ def buildEditors (String platform) {
 	"""
 
 	dir ("desktop-apps/win-linux/package/windows") {
-		uploadFiles("*.exe", "windows/", "editors", "Windows x64", "Installer")
-		uploadFiles("*.zip", "windows/", "editors", "Windows x64", "Portable")
+		uploadFiles("*.exe", "windows/", product, section, "Installer")
+		uploadFiles("*.zip", "windows/", product, section, "Portable")
 		uploadFiles("update/*.exe,update/*.xml,update/*.html",
-			"windows/editors/${version}/", "editors", "Windows x64", "WinSparkle")
+			"windows/editors/${version}/", product, section, "WinSparkle")
 	}
 }
 
 // Deploy
 
-def uploadFiles(String glob, String dest, String product, String platform, String section) {
+void uploadFiles(String glob, String dest, String product, String platform, String section) {
 	String s3uri, md5sum, shasum
 
 	Closure cmdUpload = { local, remote ->
@@ -209,16 +213,16 @@ def uploadFiles(String glob, String dest, String product, String platform, Strin
 		}
 	}
 
-	Closure cmdSha256sum = {
-		return sh (script: "shasum -a 256 ${it} | cut -c -64", returnStdout: true).trim()
-		if (platform ==~ /^Windows.+/) {
-			return bat (script: "md5sum ${it} | cut -c -32", returnStdout: true).trim()
-		} else if (platform ==~ /^macOS.+/) {
-			return sh (script: "shasum -a 256 ${it} | cut -c -64", returnStdout: true).trim()
-		} else {
-			return sh (script: "md5sum ${it} | cut -c -32", returnStdout: true).trim()
-		}
-	}
+	// Closure cmdSha256sum = {
+	// 	return sh (script: "shasum -a 256 ${it} | cut -c -64", returnStdout: true).trim()
+	// 	if (platform ==~ /^Windows.+/) {
+	// 		return bat (script: "md5sum ${it} | cut -c -32", returnStdout: true).trim()
+	// 	} else if (platform ==~ /^macOS.+/) {
+	// 		return sh (script: "shasum -a 256 ${it} | cut -c -64", returnStdout: true).trim()
+	// 	} else {
+	// 		return sh (script: "md5sum ${it} | cut -c -32", returnStdout: true).trim()
+	// 	}
+	// }
 
 	findFiles(glob: glob).each {
 		s3uri = "repo-doc-onlyoffice-com/${env.COMPANY_NAME.toLowerCase()}" \
@@ -233,13 +237,13 @@ def uploadFiles(String glob, String dest, String product, String platform, Strin
 			path: s3uri,
 			file: it.name,
 			size: it.length,
-			md5: cmdMd5sum(it.path),
-			sha256: cmdSha256sum(it.path)
+			md5: cmdMd5sum(it.path)
+			// sha256: cmdSha256sum(it.path)
 		])
 	}
 }
 
-def generateReports() {
+void generateReports() {
 	Map deploy = deployMap.groupBy { it.product }
 
 	Boolean editors = deploy.editors != null
@@ -260,7 +264,7 @@ def generateReports() {
 		if (builder)
 			writeReports("DocumentBuilder", ["builder.html": deploy.builder])
 		if (server_ce || server_ee || server_de) {
-			Map serverReports
+			Map serverReports = [:]
 			if (server_ce) serverReports."server_ce.html" = deploy.server_ce
 			if (server_ee) serverReports."server_ee.html" = deploy.server_ee
 			if (server_de) serverReports."server_de.html" = deploy.server_de
@@ -271,7 +275,7 @@ def generateReports() {
 	}
 }
 
-def writeReports(String title, Map files) {
+void writeReports(String title, Map files) {
 	files.each {
 		writeFile file: it.key, text: getHtml(it.value)
 	}
@@ -296,13 +300,7 @@ def getHtml(ArrayList data) {
 	text = "<html>\n<head>" \
 		+ "\n  <link rel=\"stylesheet\" href=\"style.css\">" \
 		+ "\n  <style type=\"text/css\">" \
-		+ "\n    body {" \
-		+ "\n      margin: 24px;" \
-		+ "\n    }" \
-		+ "\n    .flex {" \
-		+ "\n      display: flex;" \
-		+ "\n      justify-content: space-between;" \
-		+ "\n    }" \
+		+ "\n    body { margin: 24px; }" \
 		+ "\n  </style>" \
 		+ "\n<head>\n<body>"
 	data.groupBy { it.platform }.each { platform, sections ->
@@ -311,11 +309,11 @@ def getHtml(ArrayList data) {
 			text += "\n    <li><b>${section}</b></li>\n    <ul>"
 			files.each {
 				url = "https://s3.eu-west-1.amazonaws.com/${it.path}"
-				text += "\n      <li class=\"flex\">" \
+				text += "\n      <li>" \
 					+ "\n        <a href=\"${url}\">${it.file}</a>" \
 					+ ", Size: ${size(it.size)}B" \
 					+ ", MD5: <code>${it.md5}</code>" \
-					+ ", SHA-256: <code>${it.sha256}</code>" \
+					// + ", SHA-256: <code>${it.sha256}</code>" \
 					+ "\n      </li>"
 			}
 			text += "\n    </ul>"
