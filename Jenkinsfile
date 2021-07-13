@@ -176,35 +176,75 @@ def buildEditors (String platform) {
 			])
 		}
 	}
+
+	Map filesW = [:]
+	sh """
+		mkdir -pv desktop-apps/win-linux/package/windows/update
+		cd desktop-apps/win-linux/package/windows
+
+		fallocate -l 15M ONLYOFFICE_DesktopEditors_6.4.0.59_x64.exe
+		fallocate -l 16M ONLYOFFICE_DesktopEditors_6.4.0.59_x64.zip
+		fallocate -l 9M update/editors_update_6.4.0.59_x64.exe
+		fallocate -l 8M update/appcast.xml
+		fallocate -l 7M update/changes.html
+		fallocate -l 6M update/changes_ru.html
+	"""
+
+	dir ("desktop-apps/win-linux/package/windows") {
+		filesW."Installer"  = uploadFiles("*.exe", "windows/")
+		filesW."Portable"   = uploadFiles("*.zip", "windows/")
+		filesW."WinSparkle" = uploadFiles(
+			"update/*.exe,update/*.xml,update/*.html", "windows/editors/${version}/")
+	}
+
+	filesW.each {
+		it.value.each { file ->
+			deployMap.add([
+				product: "editors",
+				platform: "windows",
+				section: it.key,
+				path: file.path,
+				file: file.file,
+				size: file.size,
+				md5: file.md5
+			])
+		}
+	}
 }
 
 // Deploy
 
 def uploadFiles(String glob, String dest) {
-	String cmdUpload, cmdMd5sum, s3uri, md5sum
+	Boolean isUnix = isUnix()
+	String s3uri, md5sum
 	ArrayList ret = []
+
+	def cmdUpload = { local, remote ->
+		return "echo cp ${local} s3://${remote}"
+	}
+	def cmdMd5sum = {
+		return "md5sum ${it} | cut -f 1 -d ' '"
+	}
 
 	findFiles(glob: glob).each {
 		s3uri = "repo-doc-onlyoffice-com/${env.COMPANY_NAME.toLowerCase()}" \
 			+ "/${env.RELEASE_BRANCH}/${dest}${dest.endsWith('/') ? it.name : ''}"
-		cmdUpload = "echo cp ${it.path} s3://${s3uri}"
+		// cmdUpload = "echo cp ${it.path} s3://${s3uri}"
 
-		if (isUnix()) sh  cmdUpload
-		else          bat cmdUpload
+		if (isUnix) sh  cmdUpload(it.path, s3uri)
+		else        bat cmdUpload(it.path, s3uri)
 
-		cmdMd5sum = "md5sum ${it.path} | cut -f 1 -d ' '"
+		// cmdMd5sum = "md5sum ${it.path} | cut -f 1 -d ' '"
 
-		if (isUnix()) md5sum = sh (script: cmdMd5sum, returnStdout: true)
-		else          md5sum = bat (script: cmdMd5sum, returnStdout: true)
+		if (isUnix) md5sum = sh (script: cmdMd5sum(it.path), returnStdout: true).trim()
+		else        md5sum = bat (script: cmdMd5sum(it.path), returnStdout: true).trim()
 
 		ret.add([
 			path: s3uri,
 			file: it.name,
 			size: it.length,
-			md5: md5sum.trim()
+			md5: md5sum
 		])
-
-		if (!dest.endsWith('/')) break
 	}
 
 	return ret
@@ -224,7 +264,6 @@ def createReports() {
 		sh """
 			rm -fv *.html
 			test -f style.css || wget -nv https://unpkg.com/style.css -O style.css
-			test -f custom.css || echo \"body { margin: 16px; }\" > custom.css
 		"""
 
 		if (editors)
@@ -264,31 +303,35 @@ def getHtml(ArrayList data) {
 
 	text = "<html>\n<head>" \
 		+ "\n  <link rel=\"stylesheet\" href=\"style.css\">" \
-		+ "\n  <link rel=\"stylesheet\" href=\"custom.css\">" \
+		+ "\n  <style type=\"text/css\">" \
+		+ "\n    body {" \
+		+ "\n      margin: 24px;" \
+		+ "\n    }" \
+		+ "\n    .flex {" \
+		+ "\n      display: flex;" \
+		+ "\n      justify-content: space-between;" \
+		+ "\n    }" \
+		+ "\n  </style>" \
 		+ "\n<head>\n<body>"
 	data.groupBy { it.platform }.each { platform, sections ->
 		text += "\n  <h3>${platform}</h3>"
-		text += "\n  <table width=\"100%\">"
+		text += "\n  <ul>"
 		sections.groupBy { it.section }.each { section, files ->
-			text += "\n    <thead>"
-			text += "\n      <tr>"
-			text += "\n        <th align=\"left\" colspan=\"3\">${section}</th>"
-			text += "\n      </tr>"
-			text += "\n    </thead>"
-			text += "\n    <tbody>"
+			text += "\n    <li><b>${section}</b></li>"
+			text += "\n    <ul>"
 			files.each {
 				url = "https://s3.eu-west-1.amazonaws.com/${it.path}"
-				size = sh (script: "LANG=C numfmt --to=iec ${it.size}",
+				size = sh (script: "LANG=C numfmt --to=iec-i ${it.size}",
 					returnStdout: true).trim()
-				text += "\n      <tr>"
-				text += "\n        <td><b><a href=\"${url}\">${it.file}</a></b></td>"
-				text += "\n        <td>${size}B</td>"
-				text += "\n        <td>md5: <code>${it.md5}</code></td>"
-				text += "\n      </tr>"
+				text += "\n      <li class=\"flex\">"
+				text += "\n        <span><a href=\"${url}\">${it.file}</a></span>"
+				text += "\n        <span>size: ${size}B</span>"
+				text += "\n        <span>md5: <code>${it.md5}</code></span>"
+				text += "\n      </li>"
 			}
-			text += "\n    </tbody>"
+			text += "\n    </ul>"
 		}
-		text += "\n  </table>"
+		text += "\n  </ul>"
 	}
 	text += "\n</body>\n</html>"
 
