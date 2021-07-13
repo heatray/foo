@@ -125,7 +125,7 @@ pipeline {
 		success {
 			node('master') {
 				script {
-					createReports()
+					generateReports()
 				}
 			}
 		}
@@ -136,7 +136,6 @@ pipeline {
 
 def buildEditors (String platform) {
 	String version = env.PRODUCT_VERSION + "-" + env.BUILD_NUMBER
-	Map files = [:]
 
 	if (platform == "linux") {
 
@@ -153,31 +152,16 @@ def buildEditors (String platform) {
 		"""
 
 		dir ("desktop-apps/win-linux/package/linux") {
-			files."Ubuntu"     = uploadFiles("deb/*.deb",        "ubuntu/")
-			files."CentOS"     = uploadFiles("rpm/**/*.rpm",     "centos/")
-			files."AltLinux"   = uploadFiles("apt-rpm/**/*.rpm", "altlinux/")
-			files."Rosa"       = uploadFiles("urpmi/**/*.rpm",   "rosa/")
-			files."Portable"   = uploadFiles("tar/*.tar.gz",     "linux/")
-			// files."AstraLinux" = uploadFiles("deb-astra/*.deb", "astralinux/")
+			uploadFiles("deb/*.deb",        "ubuntu/",   "editors", "Linux x64", "Ubuntu")
+			uploadFiles("rpm/**/*.rpm",     "centos/",   "editors", "Linux x64", "CentOS")
+			uploadFiles("apt-rpm/**/*.rpm", "altlinux/", "editors", "Linux x64", "AltLinux")
+			uploadFiles("urpmi/**/*.rpm",   "rosa/",     "editors", "Linux x64", "Rosa")
+			uploadFiles("tar/*.tar.gz",     "linux/",    "editors", "Linux x64", "Portable")
+			// uploadFiles("deb-astra/*.deb",  "astralinux/", "editors", "Linux x64", "AstraLinux")
 		}
 
 	}
 
-	files.each {
-		it.value.each { file ->
-			deployMap.add([
-				product: "editors",
-				platform: platform,
-				section: it.key,
-				path: file.path,
-				file: file.file,
-				size: file.size,
-				md5: file.md5
-			])
-		}
-	}
-
-	Map filesW = [:]
 	sh """
 		mkdir -pv desktop-apps/win-linux/package/windows/update
 		cd desktop-apps/win-linux/package/windows
@@ -191,66 +175,71 @@ def buildEditors (String platform) {
 	"""
 
 	dir ("desktop-apps/win-linux/package/windows") {
-		filesW."Installer"  = uploadFiles("*.exe", "windows/")
-		filesW."Portable"   = uploadFiles("*.zip", "windows/")
-		filesW."WinSparkle" = uploadFiles(
-			"update/*.exe,update/*.xml,update/*.html", "windows/editors/${version}/")
-	}
-
-	filesW.each {
-		it.value.each { file ->
-			deployMap.add([
-				product: "editors",
-				platform: "windows",
-				section: it.key,
-				path: file.path,
-				file: file.file,
-				size: file.size,
-				md5: file.md5
-			])
-		}
+		uploadFiles("*.exe", "windows/", "editors", "Windows x64", "Installer")
+		uploadFiles("*.zip", "windows/", "editors", "Windows x64", "Portable")
+		uploadFiles("update/*.exe,update/*.xml,update/*.html",
+			"windows/editors/${version}/", "editors", "Windows x64", "WinSparkle")
 	}
 }
 
 // Deploy
 
-def uploadFiles(String glob, String dest) {
-	Boolean isUnix = isUnix()
-	String s3uri, md5sum
-	ArrayList ret = []
+def uploadFiles(String glob, String dest, String product, String platform, String section) {
+	String s3uri, md5sum, shasum
 
-	def cmdUpload = { local, remote ->
-		return "echo cp ${local} s3://${remote}"
+	Closure cmdUpload = { local, remote ->
+		String cmd = "echo cp ${local} s3://${remote}"
+		sh cmd
+		return this
+		if (platform ==~ /^Windows.*/) {
+			bat cmd
+		} else {
+			sh cmd
+		}
 	}
-	def cmdMd5sum = {
-		return "md5sum ${it} | cut -f 1 -d ' '"
+
+	Closure cmdMd5sum = {
+		return sh (script: "md5sum ${it} | cut -c -32", returnStdout: true).trim()
+		if (platform ==~ /^Windows.*/) {
+			return bat (script: "md5sum ${it} | cut -c -32", returnStdout: true).trim()
+		} else if (platform ==~ /^macOS.*/) {
+			return sh (script: "md5 -qs ${it}", returnStdout: true).trim()
+		} else {
+			return sh (script: "md5sum ${it} | cut -c -32", returnStdout: true).trim()
+		}
+	}
+
+	Closure cmdSha256sum = {
+		return sh (script: "shasum -a 256 ${it} | cut -c -64", returnStdout: true).trim()
+		if (platform ==~ /^Windows.+/) {
+			return bat (script: "md5sum ${it} | cut -c -32", returnStdout: true).trim()
+		} else if (platform ==~ /^macOS.+/) {
+			return sh (script: "shasum -a 256 ${it} | cut -c -64", returnStdout: true).trim()
+		} else {
+			return sh (script: "md5sum ${it} | cut -c -32", returnStdout: true).trim()
+		}
 	}
 
 	findFiles(glob: glob).each {
 		s3uri = "repo-doc-onlyoffice-com/${env.COMPANY_NAME.toLowerCase()}" \
 			+ "/${env.RELEASE_BRANCH}/${dest}${dest.endsWith('/') ? it.name : ''}"
-		// cmdUpload = "echo cp ${it.path} s3://${s3uri}"
 
-		if (isUnix) sh  cmdUpload(it.path, s3uri)
-		else        bat cmdUpload(it.path, s3uri)
+		cmdUpload(it.path, s3uri)
 
-		// cmdMd5sum = "md5sum ${it.path} | cut -f 1 -d ' '"
-
-		if (isUnix) md5sum = sh (script: cmdMd5sum(it.path), returnStdout: true).trim()
-		else        md5sum = bat (script: cmdMd5sum(it.path), returnStdout: true).trim()
-
-		ret.add([
+		deployMap.add([
+			product: product,
+			platform: platform,
+			section: section,
 			path: s3uri,
 			file: it.name,
 			size: it.length,
-			md5: md5sum
+			md5: cmdMd5sum(it.path),
+			sha256: cmdSha256sum(it.path)
 		])
 	}
-
-	return ret
 }
 
-def createReports() {
+def generateReports() {
 	Map deploy = deployMap.groupBy { it.product }
 
 	Boolean editors = deploy.editors != null
@@ -299,7 +288,10 @@ def writeReports(String title, Map files) {
 }
 
 def getHtml(ArrayList data) {
-	String text, url, size
+	String text, url
+	Closure size = {
+		return sh (script: "LANG=C numfmt --to=iec-i ${it}", returnStdout: true).trim()
+	}
 
 	text = "<html>\n<head>" \
 		+ "\n  <link rel=\"stylesheet\" href=\"style.css\">" \
@@ -314,20 +306,17 @@ def getHtml(ArrayList data) {
 		+ "\n  </style>" \
 		+ "\n<head>\n<body>"
 	data.groupBy { it.platform }.each { platform, sections ->
-		text += "\n  <h3>${platform}</h3>"
-		text += "\n  <ul>"
+		text += "\n  <h3>${platform}</h3>\n  <ul>"
 		sections.groupBy { it.section }.each { section, files ->
-			text += "\n    <li><b>${section}</b></li>"
-			text += "\n    <ul>"
+			text += "\n    <li><b>${section}</b></li>\n    <ul>"
 			files.each {
 				url = "https://s3.eu-west-1.amazonaws.com/${it.path}"
-				size = sh (script: "LANG=C numfmt --to=iec-i ${it.size}",
-					returnStdout: true).trim()
-				text += "\n      <li class=\"flex\">"
-				text += "\n        <span><a href=\"${url}\">${it.file}</a></span>"
-				text += "\n        <span>size: ${size}B</span>"
-				text += "\n        <span>md5: <code>${it.md5}</code></span>"
-				text += "\n      </li>"
+				text += "\n      <li class=\"flex\">" \
+					+ "\n        <a href=\"${url}\">${it.file}</a>" \
+					+ ", Size: ${size(it.size)}B" \
+					+ ", MD5: <code>${it.md5}</code>" \
+					+ ", SHA-256: <code>${it.sha256}</code>" \
+					+ "\n      </li>"
 			}
 			text += "\n    </ul>"
 		}
