@@ -12,22 +12,38 @@ defaults = [
 	server_ee:       false,
 	server_de:       false,
 	libs:            false,
-	cron:            'H 17 * * *'
+	cron:            'H 17 * * *',
+	version:         '1.0.0',
+	release_branch:  'experimental'
 ]
 
 if (BRANCH_NAME == 'master') {
 	defaults.putAll([
-		linux:         true,
-		editors:       true
+		linux:           true,
+		editors:         true,
+		release_branch:  'stable'
+	])
+}
+
+if (BRANCH_NAME == 'develop') {
+	defaults.putAll([
+		branch:        'unstable'
+	])
+}
+
+if (BRANCH_NAME ==~ /^(hotfix|release)\/.+/) {
+	defaults.putAll([
+		branch:        'testing',
+		version:       BRANCH_NAME.replaceAll(/.+\/v(?=[0-9.]+)/,''),
 	])
 }
 
 pipeline {
 	agent none
 	environment {
-		COMPANY_NAME = 'ONLYOFFICE'
-		RELEASE_BRANCH = 'stable'
-		PRODUCT_VERSION = '1.0.0'
+		COMPANY_NAME = "ONLYOFFICE"
+		RELEASE_BRANCH = "${defaults.release_branch}"
+		PRODUCT_VERSION = "${defaults.version}"
 	}
 	parameters {
 		booleanParam (
@@ -80,14 +96,7 @@ pipeline {
 		stage('Prepare') {
 			steps {
 				script {
-					def branchName = env.BRANCH_NAME
-					def productVersion = "99.99.99"
-					def pV = branchName =~ /^(release|hotfix)\\/v(.*)$/
-					if (pV.find()) productVersion = pV.group(2)
-
-					env.PRODUCT_VERSION = productVersion
 					if (params.signing) env.ENABLE_SIGNING=1
-
 					deployMap = []
 				}
 			}
@@ -313,8 +322,8 @@ def getHtml(ArrayList data) {
 					+ "\n        <a href=\"${url}\">${it.file}</a>" \
 					+ ", Size: ${size(it.size)}B" \
 					+ ", MD5: <code>${it.md5}</code>" \
-					// + ", SHA-256: <code>${it.sha256}</code>" \
 					+ "\n      </li>"
+					// + ", SHA-256: <code>${it.sha256}</code>" \
 			}
 			text += "\n    </ul>"
 		}
