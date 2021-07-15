@@ -391,8 +391,16 @@ void publishReport(String title, Map files) {
 
 def getHtml(ArrayList data) {
 	String text, url
-	Closure size = {
-		return sh (script: "LANG=C numfmt --to=iec-i ${it}", returnStdout: true).trim()
+	Closure formatFileSize = { double bytes ->
+		println bytes.getClass()
+		double base = 1024
+		Integer decs = 2
+		ArrayList prefix = ['Bytes', 'KB', 'MB', 'GB', 'TB']
+		Integer i = Math.log(bytes)/Math.log(base)
+		i = i >= prefix.size() ? prefix.size()-1 : i
+		double num = Math.round((bytes / base**i) * 10**decs) / 10**decs
+		println num.getClass()
+		return "${num} ${prefix[i]}"
 	}
 
 	text = "<html>\n<head>" \
@@ -407,7 +415,7 @@ def getHtml(ArrayList data) {
 				url = "https://s3.${s3region}.amazonaws.com/${it.path}"
 				text += "\n      <li>" \
 					+ "\n        <a href=\"${url}\">${it.file}</a>" \
-					+ ", Size: ${size(it.size)}B" \
+					+ ", Size: ${formatFileSize((double)it.size)}" \
 					+ ", MD5: <code>${it.md5}</code>" \
 					+ "\n      </li>"
 					// + ", SHA-256: <code>${it.sha256}</code>" \
