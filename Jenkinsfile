@@ -4,14 +4,14 @@ node('master') {
 }
 
 defaults = [
-	linux:           false,
+	linux:           true,
 	android:         false,
-	editors:         false,
-	builder:         false,
-	server_ce:       false,
-	server_ee:       false,
-	server_de:       false,
-	libs:            false,
+	editors:         true,
+	builder:         true,
+	server_ce:       true,
+	server_ee:       true,
+	server_de:       true,
+	libs:            true,
 	cron:            'H 17 * * *',
 	version:         '1.0.0',
 	release_branch:  'experimental'
@@ -42,8 +42,9 @@ pipeline {
 	agent none
 	environment {
 		COMPANY_NAME = "ONLYOFFICE"
-		RELEASE_BRANCH = "${defaults.release_branch}"
+		RELEASE_BRANCH = "${defaults.branch}"
 		PRODUCT_VERSION = "${defaults.version}"
+		S3_BUCKET = "repo-doc-onlyoffice-com"
 	}
 	parameters {
 		booleanParam (
@@ -97,7 +98,11 @@ pipeline {
 			steps {
 				script {
 					if (params.signing) env.ENABLE_SIGNING=1
-					deployMap = []
+
+					s3region = "eu-west-1"
+					s3bucket = "repo-doc-onlyoffice-com"
+					s3deploy = "${s3bucket}/${env.COMPANY_NAME.toLowerCase()}/${env.RELEASE_BRANCH}"
+					listDeploy = []
 				}
 			}
 		}
@@ -119,10 +124,10 @@ pipeline {
 							String platform = "linux_64"
 
 							if (params.editors)   buildEditors(platform)
-							// if (params.builder)   buildBuilder(platform)
-							// if (params.server_ce) buildServer(platform)
-							// if (params.server_ee) buildServer(platform, "enterprise")
-							// if (params.server_de) buildServer(platform, "developer")
+							if (params.builder)   buildBuilder(platform)
+							if (params.server_ce) buildServer(platform)
+							if (params.server_ee) buildServer(platform, "enterprise")
+							if (params.server_de) buildServer(platform, "developer")
 							// if (params.android)   buildAndroid(platform)
 						}
 					}
@@ -148,7 +153,7 @@ void buildEditors (String platform) {
 	String product = "editors"
 
 	if (platform == "linux_64") {
-		String section = "Linux x64"
+		String fplatform = "Linux x64"
 
 		sh """
 			mkdir -pv desktop-apps/win-linux/package/linux
@@ -163,17 +168,17 @@ void buildEditors (String platform) {
 		"""
 
 		dir ("desktop-apps/win-linux/package/linux") {
-			uploadFiles("deb/*.deb",        "ubuntu/",   product, section, "Ubuntu")
-			uploadFiles("rpm/**/*.rpm",     "centos/",   product, section, "CentOS")
-			uploadFiles("apt-rpm/**/*.rpm", "altlinux/", product, section, "AltLinux")
-			uploadFiles("urpmi/**/*.rpm",   "rosa/",     product, section, "Rosa")
-			uploadFiles("tar/*.tar.gz",     "linux/",    product, section, "Portable")
-			// uploadFiles("deb-astra/*.deb",  "astralinux/", product, section, "AstraLinux")
+			uploadFiles("deb/*.deb",        "ubuntu/",   product, fplatform, "Ubuntu")
+			uploadFiles("rpm/**/*.rpm",     "centos/",   product, fplatform, "CentOS")
+			uploadFiles("apt-rpm/**/*.rpm", "altlinux/", product, fplatform, "AltLinux")
+			uploadFiles("urpmi/**/*.rpm",   "rosa/",     product, fplatform, "Rosa")
+			uploadFiles("tar/*.tar.gz",     "linux/",    product, fplatform, "Portable")
+			// uploadFiles("deb-astra/*.deb",  "astralinux/", product, fplatform, "AstraLinux")
 		}
 
 	}
 
-	String section = "Windows x64"
+	fplatform = "Windows x64"
 
 	sh """
 		mkdir -pv desktop-apps/win-linux/package/windows/update
@@ -188,38 +193,112 @@ void buildEditors (String platform) {
 	"""
 
 	dir ("desktop-apps/win-linux/package/windows") {
-		uploadFiles("*.exe", "windows/", product, section, "Installer")
-		uploadFiles("*.zip", "windows/", product, section, "Portable")
+		uploadFiles("*.exe", "windows/", product, fplatform, "Installer")
+		uploadFiles("*.zip", "windows/", product, fplatform, "Portable")
 		uploadFiles("update/*.exe,update/*.xml,update/*.html",
-			"windows/editors/${version}/", product, section, "WinSparkle")
+			"windows/editors/${version}/", product, fplatform, "WinSparkle")
+	}
+}
+
+void buildBuilder(String platform) {
+	String version = "${env.PRODUCT_VERSION}-${env.BUILD_NUMBER}"
+	String product = "builder"
+	String fplatform
+
+	sh """
+		mkdir -pv document-builder-package
+		cd document-builder-package
+		mkdir -pv deb rpm tar
+		fallocate -l 10M deb/onlyoffice-documentbuilder_6.4.0-58_amd64.deb
+		fallocate -l 11M rpm/onlyoffice-documentbuilder-6.4.0-58.x86_64.rpm
+		fallocate -l 12M tar/onlyoffice-documentbuilder-6.4.0-58-x64.tar.gz
+	"""
+	fplatform = "Linux x64"
+	dir ("document-builder-package") {
+		uploadFiles("deb/*.deb",    "ubuntu/", product, fplatform, "Ubuntu")
+		uploadFiles("rpm/**/*.rpm", "centos/", product, fplatform, "CentOS")
+		uploadFiles("tar/*.tar.gz", "linux/",  product, fplatform, "Portable")
+	}
+
+	sh """
+		cd document-builder-package
+		mkdir -pv exe zip
+		fallocate -l 13M exe/onlyoffice-documentbuilder_6.4.0-58-x64.exe
+		fallocate -l 14M zip/onlyoffice-documentbuilder-6.4.0-58-x64.zip
+	"""
+	fplatform = "Windows x64"
+	dir ("document-builder-package") {
+		uploadFiles("exe/*.exe", "windows/", product, fplatform, "Installer")
+		uploadFiles("zip/*.zip", "windows/", product, fplatform, "Portable")
+	}
+}
+
+void buildServer(String platform, String edition='community') {
+	String version = "${env.PRODUCT_VERSION}-${env.BUILD_NUMBER}"
+	String product, productName
+
+	switch(edition) {
+		case "community":
+			product = "server_ce"
+			productName = "DocumentServer"
+			break
+		case "enterprise":
+			product = "server_ee"
+			productName = "DocumentServer-EE"
+			break
+		case "developer":
+			product = "server_de"
+			productName = "DocumentServer-DE"
+			break
+	}
+
+	sh """
+		mkdir -pv document-server-package
+		cd document-server-package
+		mkdir -pv deb rpm apt-rpm
+		fallocate -l 10M deb/onlyoffice-documentserver_6.4.0-58_amd64.deb
+		fallocate -l 11M rpm/onlyoffice-documentserver-6.4.0-58.x86_64.rpm
+		fallocate -l 12M apt-rpm/onlyoffice-documentserver-6.4.0-58.x86_64.rpm
+		fallocate -l 13M onlyoffice-documentserver-6.4.0-58-x64.tar.gz
+	"""
+	fplatform = "Linux x64"
+	dir ("document-server-package") {
+		uploadFiles("deb/*.deb",        "ubuntu/",   product, fplatform, "Ubuntu")
+		uploadFiles("rpm/**/*.rpm",     "centos/",   product, fplatform, "CentOS")
+		uploadFiles("apt-rpm/**/*.rpm", "altlinux/", product, fplatform, "AltLinux")
+		uploadFiles("*.tar.gz",         "linux/",    product, fplatform, "Portable")
+	}
+
+	sh """
+		cd document-server-package
+		mkdir -pv exe
+		fallocate -l 15M exe/onlyoffice-documentserver-6.4.0-58-x64.exe
+	"""
+	fplatform = "Windows x64"
+	dir ("document-server-package") {
+		uploadFiles("exe/*.exe", "windows/", product, fplatform, "Installer")
 	}
 }
 
 // Deploy
 
 void uploadFiles(String glob, String dest, String product, String platform, String section) {
-	String s3uri, md5sum, shasum
-
+	String s3uri
 	Closure cmdUpload = { local, remote ->
 		String cmd = "echo cp ${local} s3://${remote}"
+		// if (platform ==~ /^Windows.*/) bat cmd else sh cmd
 		sh cmd
-		return this
-		if (platform ==~ /^Windows.*/) {
-			bat cmd
-		} else {
-			sh cmd
-		}
 	}
-
 	Closure cmdMd5sum = {
-		return sh (script: "md5sum ${it} | cut -c -32", returnStdout: true).trim()
-		if (platform ==~ /^Windows.*/) {
-			return bat (script: "md5sum ${it} | cut -c -32", returnStdout: true).trim()
-		} else if (platform ==~ /^macOS.*/) {
-			return sh (script: "md5 -qs ${it}", returnStdout: true).trim()
-		} else {
+		// if (platform ==~ /^Windows.*/) {
+		// 	return powershell (
+		// 		script: "Get-FileHash ${it} -Algorithm MD5 | Select -ExpandProperty Hash",
+		// 		returnStdout: true).trim()
+		// } else if (platform ==~ /^macOS.*/) {
+		// 	return sh (script: "md5 -qs ${it}", returnStdout: true).trim()
+		// } else {
 			return sh (script: "md5sum ${it} | cut -c -32", returnStdout: true).trim()
-		}
+		// }
 	}
 
 	// Closure cmdSha256sum = {
@@ -234,12 +313,10 @@ void uploadFiles(String glob, String dest, String product, String platform, Stri
 	// }
 
 	findFiles(glob: glob).each {
-		s3uri = "repo-doc-onlyoffice-com/${env.COMPANY_NAME.toLowerCase()}" \
-			+ "/${env.RELEASE_BRANCH}/${dest}${dest.endsWith('/') ? it.name : ''}"
-
+		s3uri = "${s3deploy}/${dest}${dest.endsWith('/') ? it.name : ''}"
 		cmdUpload(it.path, s3uri)
 
-		deployMap.add([
+		listDeploy.add([
 			product: product,
 			platform: platform,
 			section: section,
@@ -253,7 +330,16 @@ void uploadFiles(String glob, String dest, String product, String platform, Stri
 }
 
 void generateReports() {
-	Map deploy = deployMap.groupBy { it.product }
+	println listDeploy
+
+	Map deploy = listDeploy.groupBy { it.product }
+
+	println deploy.editors
+	println deploy.builder
+	println deploy.server_ce
+	println deploy.server_ee
+	println deploy.server_de
+	println deploy.android
 
 	Boolean editors = deploy.editors != null
 	Boolean builder = deploy.builder != null
@@ -269,22 +355,25 @@ void generateReports() {
 		"""
 
 		if (editors)
-			writeReports("DesktopEditors", ["editors.html": deploy.editors])
+			publishReport("DesktopEditors", ["editors.html": deploy.editors])
 		if (builder)
-			writeReports("DocumentBuilder", ["builder.html": deploy.builder])
+			publishReport("DocumentBuilder", ["builder.html": deploy.builder])
 		if (server_ce || server_ee || server_de) {
 			Map serverReports = [:]
 			if (server_ce) serverReports."server_ce.html" = deploy.server_ce
 			if (server_ee) serverReports."server_ee.html" = deploy.server_ee
 			if (server_de) serverReports."server_de.html" = deploy.server_de
-			writeReports("DocumentServer", serverReports)
+			println serverReports
+			publishReport("DocumentServer", serverReports)
 		}
 		if (android)
-			writeReports("Android", ["android.html": deploy.android])
+			publishReport("Android", ["android.html": deploy.android])
 	}
 }
 
-void writeReports(String title, Map files) {
+void publishReport(String title, Map files) {
+	println files
+	println files.collect({ it.key }).join(',')
 	files.each {
 		writeFile file: it.key, text: getHtml(it.value)
 	}
@@ -308,16 +397,14 @@ def getHtml(ArrayList data) {
 
 	text = "<html>\n<head>" \
 		+ "\n  <link rel=\"stylesheet\" href=\"style.css\">" \
-		+ "\n  <style type=\"text/css\">" \
-		+ "\n    body { margin: 24px; }" \
-		+ "\n  </style>" \
+		+ "\n  <style type=\"text/css\">body { margin: 24px; }</style>" \
 		+ "\n<head>\n<body>"
 	data.groupBy { it.platform }.each { platform, sections ->
 		text += "\n  <h3>${platform}</h3>\n  <ul>"
 		sections.groupBy { it.section }.each { section, files ->
 			text += "\n    <li><b>${section}</b></li>\n    <ul>"
 			files.each {
-				url = "https://s3.eu-west-1.amazonaws.com/${it.path}"
+				url = "https://s3.${s3region}.amazonaws.com/${it.path}"
 				text += "\n      <li>" \
 					+ "\n        <a href=\"${url}\">${it.file}</a>" \
 					+ ", Size: ${size(it.size)}B" \
