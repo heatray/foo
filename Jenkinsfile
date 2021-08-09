@@ -97,6 +97,7 @@ pipeline {
 		stage('Prepare') {
 			steps {
 				script {
+					scm.dump()
 					if (params.signing) env.ENABLE_SIGNING=1
 
 					s3region = "eu-west-1"
