@@ -8,9 +8,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2.4.0
       - run: |
-          echo "${{ github.event.ref }}" | grep -Po "\d+(\.\d+)+" > generated.txt
-          git config user.name github-actions[bot]
-          git config user.email github-actions[bot]@users.noreply.github.com
-          git add .
-          git commit -m "generated"
-          git push
+          echo "${{ github.event.ref }}" | awk '{gsub(/(.+\/v)/,"version=");print;}' >> $GITHUB_ENV
+          echo "${{ env.version }}" > version
+      - name: Commit changes
+        uses: EndBug/add-and-commit@v7
+        with:
+          author_name: github-actions[bot]
+          author_email: github-actions[bot]@users.noreply.github.com
+          message: Update hard-coded version to v${{ env.version }}
+          add: version
