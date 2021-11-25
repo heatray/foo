@@ -92,6 +92,30 @@ pipeline {
 			description:  'Build and publish Android libs packages',
 			name:         'libs'
 		)
+		gitParameter (
+			branch: '',
+			branchFilter: '.*',
+			defaultValue: 'master',
+			name: 'branch_foo',
+			quickFilterEnabled: false,
+			selectedValue: 'NONE',
+			sortMode: 'NONE',
+			tagFilter: '*',
+			type: 'PT_BRANCH',
+			useRepository: 'https://github.com/heatray/foo.git'
+		)
+		gitParameter (
+			branch: '',
+			branchFilter: '.*',
+			defaultValue: 'master',
+			name: 'branch_bar',
+			quickFilterEnabled: false,
+			selectedValue: 'NONE',
+			sortMode: 'NONE',
+			tagFilter: '*',
+			type: 'PT_BRANCH',
+			useRepository: 'https://github.com/heatray/bar.git'
+		)
 	}
 	stages {
 		stage('Prepare') {
