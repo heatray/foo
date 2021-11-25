@@ -1,8 +1,3 @@
-node('master') {
-	checkout scm
-	utils = load "utils.groovy"	
-}
-
 defaults = [
 	linux:           true,
 	android:         false,
@@ -16,27 +11,6 @@ defaults = [
 	version:         '1.0.0',
 	release_branch:  'experimental'
 ]
-
-if (BRANCH_NAME == 'master') {
-	defaults.putAll([
-		linux:           true,
-		editors:         true,
-		release_branch:  'stable'
-	])
-}
-
-if (BRANCH_NAME == 'develop') {
-	defaults.putAll([
-		branch:        'unstable'
-	])
-}
-
-if (BRANCH_NAME ==~ /^(hotfix|release)\/.+/) {
-	defaults.putAll([
-		branch:        'testing',
-		version:       BRANCH_NAME.replaceAll(/.+\/v(?=[0-9.]+)/,''),
-	])
-}
 
 pipeline {
 	agent none
