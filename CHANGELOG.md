@@ -28,8 +28,7 @@ test.. test... test..... test?..... test!....
 
 ## Emphasis
 
-line **This is bold text** __This is bold text__ *This is italic text*  
-_This is italic text_ ~~Strike through~~
+line **This is bold text** *This is italic text* ~~Strike through~~
 
 ## Block quotes
 
@@ -164,7 +163,7 @@ Term 2 with *inline markup*
 
     Third paragraph of definition 2.
 
-_Compact style:_
+*Compact style:*
 
 Term 1
   ~ Definition 1

@@ -11,17 +11,20 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      # - name: Set version
-      #   run: >-
-      #     echo "${{ github.event.ref }}" |
-      #     awk '{gsub(/.+\/v/,"version=");print;}' >> $GITHUB_ENV
-      # - name: Create template changelogs
-      #   run: |
-      #     echo "${{ env.version }}" > version
-      # - name: Commit changes
-      #   uses: EndBug/add-and-commit@v7
-      #   with:
-      #     author_name: github-actions[bot]
-      #     author_email: github-actions[bot]@users.noreply.github.com
-      #     message: Create template changelogs for v${{ env.version }}
-      #     add: version
+
+      - name: Echo version
+        run: |
+          echo "Version: ${{ github.event.inputs.version }}"
+
+      - name: Create template changelogs
+        run: |
+          echo "${{ github.event.inputs.version }}" > version
+
+      - name: Commit changes
+        uses: EndBug/add-and-commit@v8
+        with:
+          author_name: github-actions[bot]
+          author_email: github-actions[bot]@users.noreply.github.com
+          message: Create template changelogs for v${{ github.event.inputs.version }}
+          add: version
+          new_branch: feature/changelog-for-v${{ github.event.inputs.version }}
