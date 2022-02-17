@@ -1,4 +1,26 @@
-# h1 Heading 8-)
+# Change log
+
+## 1.2.3
+
+### New Features
+
+* To-do
+
+#### Document Editors
+
+* To-do
+
+#### Spreadsheet Editor
+
+* To-do
+
+#### Presentation Editors
+
+* To-do
+
+### Fixes
+
+* To-do
 
 ## h2 Heading
 
