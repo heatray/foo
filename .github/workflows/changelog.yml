@@ -13,11 +13,34 @@ jobs:
         uses: actions/checkout@v2
       - name: Write template changelog
         run: |
-          cat \
-            <(head -n4 CHANGELOG.md) \
-            <(echo 'Line 5!') \
-            <(tail -n +5 CHANGELOG.md) \
-            > CHANGELOG.md
+          cp -fv CHANGELOG.md CHANGELOG.md.bak
+          head -n2 CHANGELOG.md.bak > CHANGELOG.md
+          cat >> CHANGELOG.md << EOF
+          ## ${{ github.event.inputs.version }}
+
+          ### New Features
+
+          * To-do
+
+          #### Document Editors
+
+          * To-do
+
+          #### Spreadsheet Editor
+
+          * To-do
+
+          #### Presentation Editors
+
+          * To-do
+
+          ### Fixes
+
+          * To-do
+
+          EOF
+          tail -n +3 CHANGELOG.md.bak >> CHANGELOG.md
+          rm -fv CHANGELOG.md.bak
       - name: Commit changes
         uses: EndBug/add-and-commit@v8
         with:
