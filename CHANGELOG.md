@@ -62,13 +62,13 @@ line **This is bold text** *This is italic text* ~~Strike through~~
 
 Unordered
 
-+ Create a list by starting a line with `+`, `-`, or `*`
-+ Sub-lists are made by indenting 2 spaces:
-  + Marker character change forces new list start:
-    + line
-    + line
-    + line
-+ Very easy!
+* Create a list by starting a line with `+`, `-`, or `*`
+* Sub-lists are made by indenting 2 spaces:
+  * Marker character change forces new list start:
+    * line
+    * line
+    * line
+* Very easy!
 
 Ordered
 
@@ -143,8 +143,8 @@ The killer feature of `markdown-it` is very effective support of
 
 ### [Subscript](https://github.com/markdown-it/markdown-it-sub) / [Superscript](https://github.com/markdown-it/markdown-it-sup)
 
-+ 19^t^
-+ H~2~O
+* 19^t^
+* H~2~O
 
 ### [\<ins>](https://github.com/markdown-it/markdown-it-ins)
 
