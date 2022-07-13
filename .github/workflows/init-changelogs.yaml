@@ -17,22 +17,19 @@ jobs:
 
       - name: Set version
         run: |
-          echo "${{ github.ref }}"
           REF="${{ github.ref }}"
-          echo "$REF ${REF#*/v}"
           echo "VERSION=${REF#*/v}" >> $GITHUB_ENV
 
       - name: Create template changelogs
         run: |
-          changes_dir=win-linux/package/windows/update/changes/$VERSION
-          mkdir -p $changes_dir
-
           TITLE_EN="ONLYOFFICE Desktop Editors Release Notes"
           TITLE_RU="История изменений ONLYOFFICE Desktop Editors"
           MORE_EN="and a little more..."
           MORE_RU="и прочее..."
 
-          cat >> $changes_dir/en.html << EOF
+          CHANGES_DIR=win-linux/package/windows/update/changes/$VERSION
+          mkdir -p $CHANGES_DIR
+          cat >> $CHANGES_DIR/en.html << EOF
           <!DOCTYPE html>
           <html>
           <head>
@@ -73,6 +70,7 @@ jobs:
           <body>
               <div class="version">
                   <h1>ONLYOFFICE Desktop Editors ${VERSION}<span class="releasedate"> - [[DATE]]</span></h1>
+
                   <h2>New Features</h2>
                   <h4>All Editors</h4>
                   <ul>
@@ -90,6 +88,7 @@ jobs:
                   <ul>
                       <li>TODO</li>
                   </ul>
+
                   <h2>Fixes</h2>
                   <h4>All Editors</h4>
                   <ul>
@@ -107,6 +106,7 @@ jobs:
                   <ul>
                       <li>TODO</li>
                   </ul>
+
                   <div class="more"><a href="https://github.com/ONLYOFFICE/DesktopEditors/blob/master/CHANGELOG.md#${VERSION//./}" target="_blank">${MORE_EN}</a></div>
               </div>
           </body>
@@ -118,4 +118,4 @@ jobs:
         with:
           author_name: github-actions[bot]
           author_email: github-actions[bot]@users.noreply.github.com
-          message: Create template changelogs for v${{ env.version }}
+          message: Initialize changelogs for v${{ env.VERSION }}
