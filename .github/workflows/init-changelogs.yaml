@@ -1,12 +1,12 @@
-name: Create changelog files
+name: Initialize changelog files
 
 on: workflow_dispatch
 
 jobs:
-  create-changelog:
+  changelogs:
     if: >-
-      ${{ startsWith(github.event.ref, 'hotfix/') ||
-      startsWith(github.event.ref, 'release/') }}
+      ${{ contains(github.ref, 'refs/heads/hotfix/v') ||
+          contains(github.ref, 'refs/heads/release/v') }}
     runs-on: ubuntu-latest
     steps:
 
@@ -17,8 +17,8 @@ jobs:
 
       - name: Set version
         run: >-
-          echo "${{ github.event.ref }}" |
-          awk '{gsub(/.+\/v/,"VERSION=");print;}' >> $GITHUB_ENV
+          REF="${{ github.ref }}"
+          echo "VERSION=${REF#*/v}" >> $GITHUB_ENV
 
       - name: Create template changelogs
         run: |
@@ -35,7 +35,7 @@ jobs:
           <html>
           <head>
               <meta charset="utf-8">
-              <title>$TITLE_EN</title>
+              <title>${TITLE_EN}</title>
               <style type="text/css">
                   body {
                       background: white;
@@ -70,7 +70,7 @@ jobs:
           </head>
           <body>
               <div class="version">
-                  <h1>ONLYOFFICE Desktop Editors $VERSION<span class="releasedate"> - [[DATE]]</span></h1>
+                  <h1>ONLYOFFICE Desktop Editors ${VERSION}<span class="releasedate"> - [[DATE]]</span></h1>
                   <h2>New Features</h2>
                   <h4>All Editors</h4>
                   <ul>
@@ -105,7 +105,7 @@ jobs:
                   <ul>
                       <li>TODO</li>
                   </ul>
-                  <div class="more"><a href="https://github.com/ONLYOFFICE/DesktopEditors/blob/master/CHANGELOG.md#$VERSION" target="_blank">$MORE_EN</a></div>
+                  <div class="more"><a href="https://github.com/ONLYOFFICE/DesktopEditors/blob/master/CHANGELOG.md#${VERSION//./}" target="_blank">${MORE_EN}</a></div>
               </div>
           </body>
           </html>
