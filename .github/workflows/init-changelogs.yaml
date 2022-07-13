@@ -16,8 +16,10 @@ jobs:
           token: ${{ secrets.PUSH_TOKEN }}
 
       - name: Set version
-        run: >-
+        run: |
+          echo "${{ github.ref }}"
           REF="${{ github.ref }}"
+          echo "$REF ${REF#*/v}"
           echo "VERSION=${REF#*/v}" >> $GITHUB_ENV
 
       - name: Create template changelogs
