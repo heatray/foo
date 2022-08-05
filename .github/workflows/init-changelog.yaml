@@ -26,8 +26,8 @@ jobs:
           mkdir -p $CHANGES_DIR
 
           declare -A HTML_WIN=(
-            [en]="en.html"
-            [ru]="ru.html")
+            [en]="changes.html"
+            [ru]="changes_ru.html")
           declare -A HTML_MAC=(
             [en]="ReleaseNotes.html"
             [ru]="ReleaseNotesRU.html")
