@@ -78,7 +78,6 @@ jobs:
             <body>
                 <div class="version">
                     <h1>ONLYOFFICE Desktop Editors ${VERSION}<span class="releasedate"> - [[DATE]]</span></h1>
-
                     <h2>New Features</h2>
                     <h4>All Editors</h4>
                     <ul>
@@ -96,7 +95,6 @@ jobs:
                     <ul>
                         <li>TODO</li>
                     </ul>
-
                     <h2>Fixes</h2>
                     <h4>All Editors</h4>
                     <ul>
@@ -114,7 +112,6 @@ jobs:
                     <ul>
                         <li>TODO</li>
                     </ul>
-
                     <div class="more"><a href="https://github.com/ONLYOFFICE/DesktopEditors/blob/master/CHANGELOG.md#${VERSION//./}" target="_blank">${MORE[lang]}</a></div>
                 </div>
             </body>
