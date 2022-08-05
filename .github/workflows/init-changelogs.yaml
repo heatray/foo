@@ -23,13 +23,13 @@ jobs:
       - name: Create template changelogs
         run: |
           LANGS=("en" "ru")
-          
-          TITLE[en]="ONLYOFFICE Desktop Editors Release Notes"
-          HEADING[en]="ONLYOFFICE Desktop Editors"
-          MORE[en]="and a little more..."
 
+          declare -A TITLE
+          TITLE[en]="ONLYOFFICE Desktop Editors Release Notes"
           TITLE[ru]="История изменений ONLYOFFICE Desktop Editors"
-          HEADING[ru]="ONLYOFFICE Desktop Editors"
+          
+          declare -A MORE
+          MORE[en]="and a little more..."
           MORE[ru]="и прочее..."
 
           CHANGES_DIR=win-linux/package/windows/update/changes/$VERSION
@@ -37,86 +37,89 @@ jobs:
           cd $CHANGES_DIR
 
           for lang in "${LANGS[@]}"; do
-            cat > ${lang}.html << EOF
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="utf-8">
-                <title>${TITLE[lang]}</title>
-                <style type="text/css">
-                    body {
-                        background: white;
-                        font: 12px "Lucida Grande", "Lucida Sans Unicode", Verdana, Lucida, Helvetica, sans-serif;
-                    }
-                    h1, h2, h3 {
-                        color: #000000;
-                        font-family: "Helvetica";
-                        font-weight: normal;
-                        font-style: normal;
-                    }
-                    h1 {
-                        font-size: 18px;
-                    }
-                    h2 {
-                        font-size: 16px;
-                    }
-                    h3 {
-                        font-size: 14px;
-                    }
-                    .releasedate {
-                        color: #888;
-                        font-size: medium;
-                    }
-                    .more {
-                        margin-bottom: 20px;
-                    }
-                    .version {
-                        border-bottom: 1px solid #cfcfcf;
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="version">
-                    <h1>ONLYOFFICE Desktop Editors ${VERSION}<span class="releasedate"> - [[DATE]]</span></h1>
-                    <h2>New Features</h2>
-                    <h4>All Editors</h4>
-                    <ul>
-                        <li>TODO</li>
-                    </ul>
-                    <h4>Document Editor</h4>
-                    <ul>
-                        <li>TODO</li>
-                    </ul>
-                    <h4>Spreadsheet Editor</h4>
-                    <ul>
-                        <li>TODO</li>
-                    </ul>
-                    <h4>Presentation Editor</h4>
-                    <ul>
-                        <li>TODO</li>
-                    </ul>
-                    <h2>Fixes</h2>
-                    <h4>All Editors</h4>
-                    <ul>
-                        <li>TODO</li>
-                    </ul>
-                    <h4>Document Editor</h4>
-                    <ul>
-                        <li>TODO</li>
-                    </ul>
-                    <h4>Spreadsheet Editor</h4>
-                    <ul>
-                        <li>TODO</li>
-                    </ul>
-                    <h4>Presentation Editor</h4>
-                    <ul>
-                        <li>TODO</li>
-                    </ul>
-                    <div class="more"><a href="https://github.com/ONLYOFFICE/DesktopEditors/blob/master/CHANGELOG.md#${VERSION//./}" target="_blank">${MORE[lang]}</a></div>
-                </div>
-            </body>
-            </html>
-            EOF
+          cat > "${lang}.html" << EOF
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <meta charset="utf-8">
+              <title>${TITLE["$lang"]}</title>
+              <style type="text/css">
+                  body {
+                      background: white;
+                      font: 12px "Lucida Grande", "Lucida Sans Unicode", Verdana, Lucida, Helvetica, sans-serif;
+                  }
+                  h1, h2, h3 {
+                      color: #000000;
+                      font-family: "Helvetica";
+                      font-weight: normal;
+                      font-style: normal;
+                  }
+                  h1 {
+                      font-size: 18px;
+                  }
+                  h2 {
+                      font-size: 16px;
+                  }
+                  h3 {
+                      font-size: 14px;
+                  }
+                  .releasedate {
+                      color: #888;
+                      font-size: medium;
+                  }
+                  .more {
+                      margin-bottom: 20px;
+                  }
+                  .version {
+                      border-bottom: 1px solid #cfcfcf;
+                  }
+              </style>
+          </head>
+          <body>
+              <div class="version">
+                  <h1>ONLYOFFICE Desktop Editors ${VERSION}<span class="releasedate"> - [[DATE]]</span></h1>
+
+                  <h2>New Features</h2>
+                  <h4>All Editors</h4>
+                  <ul>
+                      <li>TODO</li>
+                  </ul>
+                  <h4>Document Editor</h4>
+                  <ul>
+                      <li>TODO</li>
+                  </ul>
+                  <h4>Spreadsheet Editor</h4>
+                  <ul>
+                      <li>TODO</li>
+                  </ul>
+                  <h4>Presentation Editor</h4>
+                  <ul>
+                      <li>TODO</li>
+                  </ul>
+
+                  <h2>Fixes</h2>
+                  <h4>All Editors</h4>
+                  <ul>
+                      <li>TODO</li>
+                  </ul>
+                  <h4>Document Editor</h4>
+                  <ul>
+                      <li>TODO</li>
+                  </ul>
+                  <h4>Spreadsheet Editor</h4>
+                  <ul>
+                      <li>TODO</li>
+                  </ul>
+                  <h4>Presentation Editor</h4>
+                  <ul>
+                      <li>TODO</li>
+                  </ul>
+
+                  <div class="more"><a href="https://github.com/ONLYOFFICE/DesktopEditors/blob/master/CHANGELOG.md#${VERSION//./}" target="_blank">${MORE["$lang"]}</a></div>
+              </div>
+          </body>
+          </html>
+          EOF
           done
 
       - name: Commit changes
