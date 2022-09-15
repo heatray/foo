@@ -3,20 +3,10 @@ name: Docker testing
 on:
   workflow_dispatch:
     inputs:
-      release:
-        type: choice
-        description: Release branch
-        options:
-          - testing
-          - unstable
-      version:
-        description: 'Version (ex. 1.2.3)'
-        type: string
-        # required: true
       build:
         description: 'Build number (ex. 45)'
         type: string
-        # required: true
+        required: true
       amd64:
         type: boolean
         description: 'Build AMD64'
@@ -46,29 +36,42 @@ jobs:
   prepare:
     runs-on: ubuntu-latest
     steps:
-      - id: setup
+      - id: matrix
         run: |
           set -ex
 
-          [ ${{ github.event.inputs.amd64 }} = true ] && PLATFORMS+=("amd64")
-          [ ${{ github.event.inputs.arm64 }} = true ] && PLATFORMS+=("arm64")
-          if [ -z ${PLATFORMS} ]; then
+          branch_name=${GITHUB_REF#refs/heads/}
+          if [ $branch_name = develop ]; then
+            echo "RELEASE_BRANCH=unstable" >> $GITHUB_ENV
+            echo "PRODUCT_VERSION=99.99.99" >> $GITHUB_ENV
+          elif [[ $branch_name =~ hotfix || $branch_name =~ release ]]; then
+            echo "RELEASE_BRANCH=testing" >> $GITHUB_ENV
+            echo "PRODUCT_VERSION=${branch_name#*/v}" >> $GITHUB_ENV
+          else
+            echo "Wrong branch."
+            exit 1
+          fi
+
+          echo "BUILD_NUMBER=${{ github.event.inputs.build }}" >> $GITHUB_ENV
+
+          [ ${{ github.event.inputs.amd64 }} = true ] && platforms+=("amd64")
+          [ ${{ github.event.inputs.arm64 }} = true ] && platforms+=("arm64")
+          if [ -z ${platforms} ]; then
             echo "None of the platforms are selected."
             exit 1
           fi
-          echo "::set-output name=platforms::$(jq -n -c --arg arr "${PLATFORMS[*]}" '($arr|split(" "))')"
+          echo "PLATFORM=$(echo ${platforms[*]/#/linux/} | tr ' ' ',')" >> $GITHUB_ENV
 
-          [ ${{ github.event.inputs.community }} = true ] && EDITIONS+=("community")
-          [ ${{ github.event.inputs.enterprise }} = true ] && EDITIONS+=("enterprise")
-          [ ${{ github.event.inputs.developer }} = true ] && EDITIONS+=("developer")
-          if [ -z ${EDITIONS} ]; then
+          [ ${{ github.event.inputs.community }} = true ] && editions+=("community")
+          [ ${{ github.event.inputs.enterprise }} = true ] && editions+=("enterprise")
+          [ ${{ github.event.inputs.developer }} = true ] && editions+=("developer")
+          if [ -z ${editions} ]; then
             echo "None of the editions are selected."
             exit 1
           fi
-          echo "::set-output name=editions::$(jq -n -c --arg arr "${EDITIONS[*]}" '($arr|split(" "))')"
+          echo "::set-output name=editions::$(jq -n -c --arg arr "${editions[*]}" '($arr|split(" "))')"
     outputs:
-      platforms: ${{ steps.setup.outputs.platforms }}
-      editions: ${{ steps.setup.outputs.editions }}
+      editions: ${{ steps.matrix.outputs.editions }}
 
   build:
     name: "Build ${{ matrix.image }}-${{ matrix.edition }}"
@@ -96,45 +99,26 @@ jobs:
       #     username: ${{ secrets.DOCKER_HUB_USERNAME }}
       #     password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-      - name: Debug
-        run: |
-          echo ${{ github.event.inputs.release }}
-          echo ${{ github.event.inputs.version }}
-          echo ${{ github.event.inputs.build }}
-          printenv
-
-      - name: Get Tag Name
-        run: |
-          echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-
       - name: Build 4testing
         run: |
           set -eux
 
           ### ==>> At this step build variable declaration ###
-          DOCKER_TAG=$( echo ${{ env.RELEASE_VERSION }} | sed 's/^v//' )
-          PACKAGE_VERSION=$( echo $DOCKER_TAG | sed -E 's/(.*)\./\1-/' )
-          RELEASE_BRANCH=${{ github.event.inputs.release }}
-
-          PLATFORMS=("linux/amd64" "linux/arm64")
-
-          ### ==>> Build and push images at this step ###
-
-          [ "${{ matrix.edition }}" == "community"  ] && PRODUCT_EDITION=""
-          [ "${{ matrix.edition }}" == "enterprise" ] && PRODUCT_EDITION="-ee"
-          [ "${{ matrix.edition }}" == "developer"  ] && PRODUCT_EDITION="-de"
-
+          [ ${{ matrix.edition }} = community ] && PRODUCT_EDITION=""
+          [ ${{ matrix.edition }} = enterprise ] && PRODUCT_EDITION="-ee"
+          [ ${{ matrix.edition }} = developer ] && PRODUCT_EDITION="-de"
+          # export COMPANY_NAME
+          # export PRODUCT_NAME
           export PRODUCT_EDITION
-          export VERSION=${{ github.event.inputs.version }}-${{ github.event.inputs.build }}
-          export PLATFORM=$(echo ${PLATFORMS[@]} | sed 's/ /,/g')
+          export PACKAGE_VERSION=${PRODUCT_VERSION}-${BUILD_NUMBER}
+          export PACKAGE_BASEURL=http://repo-doc-onlyoffice-com.s3.amazonaws.com/${COMPANY_NAME}/${RELEASE_BRANCH}/ubuntu
+          # export PLATFORM
           export DOCKERFILE=Dockerfile
           export PREFIX_NAME=4testing-
-          export TAG=$DOCKER_TAG
-          export RELEASE_BRANCH
-          export PACKAGE_BASEURL=http://repo-doc-onlyoffice-com.s3.amazonaws.com/${COMPANY_NAME}/${RELEASE_BRANCH}/ubuntu
+          export TAG=${PRODUCT_VERSION}.${BUILD_NUMBER}
 
+          ### ==>> Build and push images at this step ###
           echo \
           docker buildx bake -f docker-bake.hcl ${{ matrix.image }} --push
-          echo "DONE: Build success >> exit with 0"
-          exit 0
+          echo "DONE: Build success"
         shell: bash
