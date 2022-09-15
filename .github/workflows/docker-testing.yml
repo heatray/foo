@@ -45,9 +45,6 @@ env:
 jobs:
   prepare:
     runs-on: ubuntu-latest
-    outputs:
-      platforms: ${{ steps.setup.outputs.platforms }}
-      editions: ${{ steps.setup.outputs.editions }}
     steps:
       - id: setup
         run: |
@@ -59,7 +56,7 @@ jobs:
             echo "None of the platforms are selected."
             exit 1
           fi
-          echo "::set-output name=platforms::$(jq -n --arg arr "${PLATFORMS[*]}" '($arr|split(" "))')"
+          echo "::set-output name=platforms::$(jq -n -c --arg arr "${PLATFORMS[*]}" '($arr|split(" "))')"
 
           [ ${{ github.event.inputs.community }} = true ] && EDITIONS+=("community")
           [ ${{ github.event.inputs.enterprise }} = true ] && EDITIONS+=("enterprise")
@@ -68,7 +65,10 @@ jobs:
             echo "None of the editions are selected."
             exit 1
           fi
-          echo "::set-output name=editions::$(jq -n --arg arr "${EDITIONS[*]}" '($arr|split(" "))')"
+          echo "::set-output name=editions::$(jq -n -c --arg arr "${EDITIONS[*]}" '($arr|split(" "))')"
+    outputs:
+      platforms: ${{ steps.setup.outputs.platforms }}
+      editions: ${{ steps.setup.outputs.editions }}
 
   build:
     name: "Build ${{ matrix.image }}-${{ matrix.edition }}"
