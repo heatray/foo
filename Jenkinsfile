@@ -108,7 +108,7 @@ pipeline {
 		stage('Build') {
 			parallel {
 				stage('Linux 64-bit build') {
-					agent { label 'linux_64' }
+					agent { label 'linux_x86_64_u14' }
 					when {
 						expression { params.linux_64 }
 						beforeAgent true
