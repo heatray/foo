@@ -28,10 +28,10 @@ on:
         description: 'Build Developer Edition'
         default: true
 
-env: 
+env:
   COMPANY_NAME: "onlyoffice"
   PRODUCT_NAME: "documentserver"
-      
+
 jobs:
   prepare:
     runs-on: ubuntu-latest
@@ -40,36 +40,24 @@ jobs:
         run: |
           set -ex
 
-          branch_name=${GITHUB_REF#refs/heads/}
-          if [ $branch_name = develop ]; then
-            echo "RELEASE_BRANCH=unstable" >> $GITHUB_ENV
-            echo "PRODUCT_VERSION=99.99.99" >> $GITHUB_ENV
-          elif [[ $branch_name =~ hotfix || $branch_name =~ release ]]; then
-            echo "RELEASE_BRANCH=testing" >> $GITHUB_ENV
-            echo "PRODUCT_VERSION=${branch_name#*/v}" >> $GITHUB_ENV
-          else
-            echo "Wrong branch."
-            exit 1
-          fi
+          BRANCH_NAME=${GITHUB_REF#refs/heads/}
 
-          echo "BUILD_NUMBER=${{ github.event.inputs.build }}" >> $GITHUB_ENV
-
-          [ ${{ github.event.inputs.amd64 }} = true ] && platforms+=("amd64")
-          [ ${{ github.event.inputs.arm64 }} = true ] && platforms+=("arm64")
-          if [ -z ${platforms} ]; then
+          [ ${{ github.event.inputs.amd64 }} = true ] && PLATFORMS+=("amd64")
+          [ ${{ github.event.inputs.arm64 }} = true ] && PLATFORMS+=("arm64")
+          if [ -z ${PLATFORMS} ]; then
             echo "None of the platforms are selected."
             exit 1
           fi
-          echo "PLATFORM=$(echo ${platforms[*]/#/linux/} | tr ' ' ',')" >> $GITHUB_ENV
 
-          [ ${{ github.event.inputs.community }} = true ] && editions+=("community")
-          [ ${{ github.event.inputs.enterprise }} = true ] && editions+=("enterprise")
-          [ ${{ github.event.inputs.developer }} = true ] && editions+=("developer")
-          if [ -z ${editions} ]; then
+          [ ${{ github.event.inputs.community }} = true ] && EDITIONS+=("community")
+          [ ${{ github.event.inputs.enterprise }} = true ] && EDITIONS+=("enterprise")
+          [ ${{ github.event.inputs.developer }} = true ] && EDITIONS+=("developer")
+          if [ -z ${EDITIONS} ]; then
             echo "None of the editions are selected."
             exit 1
           fi
-          echo "::set-output name=editions::$(jq -n -c --arg arr "${editions[*]}" '($arr|split(" "))')"
+
+          echo "editions=$(jq -n -c --arg s "${EDITIONS[*]}" '($s|split(" "))')" >> $GITHUB_OUTPUT
     outputs:
       editions: ${{ steps.matrix.outputs.editions }}
 
@@ -83,42 +71,11 @@ jobs:
         image: ["documentserver"]
         edition: ${{ fromJSON(needs.prepare.outputs.editions) }}
     steps:
-      - name: Checkout code 
+      - name: Checkout code
         uses: actions/checkout@v3
-
-      # - name: Set up QEMU
-      #   uses: docker/setup-qemu-action@v2
-
-      # - name: Set up Docker Buildx
-      #   id: buildx
-      #   uses: docker/setup-buildx-action@v2
-     
-      # - name: Login to Docker Hub
-      #   uses: docker/login-action@v2
-      #   with:
-      #     username: ${{ secrets.DOCKER_HUB_USERNAME }}
-      #     password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
       - name: Build 4testing
         run: |
           set -eux
-
-          ### ==>> At this step build variable declaration ###
-          [ ${{ matrix.edition }} = community ] && PRODUCT_EDITION=""
-          [ ${{ matrix.edition }} = enterprise ] && PRODUCT_EDITION="-ee"
-          [ ${{ matrix.edition }} = developer ] && PRODUCT_EDITION="-de"
-          # export COMPANY_NAME
-          # export PRODUCT_NAME
-          export PRODUCT_EDITION
-          export PACKAGE_VERSION=${PRODUCT_VERSION}-${BUILD_NUMBER}
-          export PACKAGE_BASEURL=http://repo-doc-onlyoffice-com.s3.amazonaws.com/${COMPANY_NAME}/${RELEASE_BRANCH}/ubuntu
-          # export PLATFORM
-          export DOCKERFILE=Dockerfile
-          export PREFIX_NAME=4testing-
-          export TAG=${PRODUCT_VERSION}.${BUILD_NUMBER}
-
-          ### ==>> Build and push images at this step ###
-          echo \
-          docker buildx bake -f docker-bake.hcl ${{ matrix.image }} --push
-          echo "DONE: Build success"
+          echo $GITHUB_OUTPUT
         shell: bash
