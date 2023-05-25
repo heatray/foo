@@ -36,6 +36,10 @@ jobs:
   prepare:
     runs-on: ubuntu-latest
     steps:
+      - name: Set global vars
+        run: |
+          echo "BUILD_NUMBER=${{ github.event.inputs.build }}" >> $GITHUB_ENV
+
       - id: matrix
         run: |
           set -ex
@@ -73,10 +77,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
-      - name: Set global vars
-        run: |
-          echo "BUILD_NUMBER=${{ github.event.inputs.build }}" >> $GITHUB_ENV
 
       - name: Build 4testing
         run: |
