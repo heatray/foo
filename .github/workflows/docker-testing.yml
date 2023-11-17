@@ -1,7 +1,7 @@
 name: Docker testing
 run-name: >
   Build #${{ inputs.build }} [
-  ${{ join(toJSON('["1","2"]'), '/') }}
+  ${{ join(toJSON('[1,2]'), '/') }}
   ${{ inputs.amd64 && 'AMD64' || '' }}
   ${{ inputs.arm64 && 'ARM64' || '' }}
   ] [
@@ -9,6 +9,7 @@ run-name: >
   ${{ inputs.enterprise && 'EE' || '' }}
   ${{ inputs.developer && 'DE' || '' }}
   ]
+  ${{ fromJSON(inputs) }}
 
 on:
   workflow_dispatch:
