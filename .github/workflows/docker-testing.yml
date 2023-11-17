@@ -1,11 +1,11 @@
 name: Docker testing
 run-name: >-
   Build #${{ inputs.build }}
-  AMD64=${{ inputs.amd64 && 'AMD64' }}
-  ARM64=${{ inputs.arm64 && 'ARM64' }}
-  CE=${{ inputs.community }}
-  EE=${{ inputs.enterprise }}
-  DE=${{ inputs.developer }}
+  ${{ inputs.amd64 && 'AMD64' || '' }}
+  ${{ inputs.arm64 && 'ARM64' || '' }}
+  ${{ inputs.community && 'CE' || '' }}
+  ${{ inputs.enterprise && 'EE' || '' }}
+  ${{ inputs.developer && 'DE' || '' }}
 
 on:
   workflow_dispatch:
