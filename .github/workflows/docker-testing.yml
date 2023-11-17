@@ -1,8 +1,8 @@
 name: Docker testing
 run-name: >-
   Build #${{ inputs.build }}
-  AMD64=${{ inputs.amd64 || 'AMD64' }}
-  ARM64=${{ inputs.arm64 || 'ARM64' }}
+  AMD64=${{ inputs.amd64 && 'AMD64' }}
+  ARM64=${{ inputs.arm64 && 'ARM64' }}
   CE=${{ inputs.community }}
   EE=${{ inputs.enterprise }}
   DE=${{ inputs.developer }}
@@ -67,26 +67,3 @@ jobs:
             echo "None of the editions are selected."
             exit 1
           fi
-
-          echo "editions=$(jq -n -c --arg s "${EDITIONS[*]}" '($s|split(" "))')" >> $GITHUB_OUTPUT
-    outputs:
-      editions: ${{ steps.matrix.outputs.editions }}
-
-  build:
-    name: "Build ${{ matrix.image }}-${{ matrix.edition }}"
-    runs-on: ubuntu-latest
-    needs: prepare
-    strategy:
-      fail-fast: false
-      matrix:
-        image: ["documentserver"]
-        edition: ${{ fromJSON(needs.prepare.outputs.editions) }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Build 4testing
-        run: |
-          set -eux
-          echo $BUILD_NUMBER
-        shell: bash
