@@ -1,11 +1,13 @@
 name: Docker testing
 run-name: >
   Build #${{ inputs.build }} [
-  ${{ inputs.amd64 && 'AMD64' || '' }}/
-  ${{ inputs.arm64 && 'ARM64' || '' }}/
-  ${{ inputs.community && 'CE' || '' }}/
-  ${{ inputs.enterprise && 'EE' || '' }}/
-  ${{ inputs.developer && 'DE' || '' }}/
+  ${{ join(toJSON('["1","2"]'), '/') }}
+  ${{ inputs.amd64 && 'AMD64' || '' }}
+  ${{ inputs.arm64 && 'ARM64' || '' }}
+  ] [
+  ${{ inputs.community && 'CE' || '' }}
+  ${{ inputs.enterprise && 'EE' || '' }}
+  ${{ inputs.developer && 'DE' || '' }}
   ]
 
 on:
