@@ -1,7 +1,10 @@
 name: Docker testing
 run-name: >
   Build #${{ inputs.build }} [
-  ${{ format('["{0}","{1}"]', inputs.amd64 && 'AMD64' || '', inputs.arm64 && 'ARM64' || '') }}
+  ${{ join(fromJSON(format('["{0}","{1}"]',
+    inputs.amd64 && 'AMD64' || '',
+    inputs.arm64 && 'ARM64' || ''
+  )), '/') }}
   ] [
   ${{ inputs.community && 'CE' || '' }}
   ${{ inputs.enterprise && 'EE' || '' }}
