@@ -1,4 +1,5 @@
 name: Docker testing
+run-name: Build ${{ inputs.build }} ${{ inputs.amd64 }} ${{ inputs.arm64 }} ${{ inputs.community }} ${{ inputs.enterprise }} ${{ inputs.developer }} by @${{ github.actor }}
 
 on:
   workflow_dispatch:
