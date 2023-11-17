@@ -1,5 +1,12 @@
 name: Docker testing
-run-name: Build ${{ inputs.build }} ${{ inputs.amd64 }} ${{ inputs.arm64 }} ${{ inputs.community }} ${{ inputs.enterprise }} ${{ inputs.developer }} by @${{ github.actor }}
+run-name: >-
+  Build \#${{ inputs.build }}
+  AMD64=${{ inputs.amd64 }}
+  ARM64=${{ inputs.arm64 }}
+  CE=${{ inputs.community }}
+  EE=${{ inputs.enterprise }}
+  DE=${{ inputs.developer }}
+  by @${{ github.actor }}
 
 on:
   workflow_dispatch:
@@ -39,7 +46,7 @@ jobs:
     steps:
       - name: Set global vars
         run: |
-          echo "BUILD_NUMBER=${{ github.event.inputs.build }}" >> $GITHUB_ENV
+          echo "BUILD_NUMBER=${{ inputs.build }}" >> $GITHUB_ENV
 
       - id: matrix
         run: |
@@ -47,16 +54,16 @@ jobs:
 
           BRANCH_NAME=${GITHUB_REF#refs/heads/}
 
-          [ ${{ github.event.inputs.amd64 }} = true ] && PLATFORMS+=("amd64")
-          [ ${{ github.event.inputs.arm64 }} = true ] && PLATFORMS+=("arm64")
+          [ ${{ inputs.amd64 }} = true ] && PLATFORMS+=("amd64")
+          [ ${{ inputs.arm64 }} = true ] && PLATFORMS+=("arm64")
           if [ -z ${PLATFORMS} ]; then
             echo "None of the platforms are selected."
             exit 1
           fi
 
-          [ ${{ github.event.inputs.community }} = true ] && EDITIONS+=("community")
-          [ ${{ github.event.inputs.enterprise }} = true ] && EDITIONS+=("enterprise")
-          [ ${{ github.event.inputs.developer }} = true ] && EDITIONS+=("developer")
+          [ ${{ inputs.community }} = true ] && EDITIONS+=("community")
+          [ ${{ inputs.enterprise }} = true ] && EDITIONS+=("enterprise")
+          [ ${{ inputs.developer }} = true ] && EDITIONS+=("developer")
           if [ -z ${EDITIONS} ]; then
             echo "None of the editions are selected."
             exit 1
