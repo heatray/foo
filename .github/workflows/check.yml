@@ -1,10 +1,10 @@
-name: Markdown check
+name: Markdown Lint
 
 on:
   workflow_dispatch:
   push:
     branches:
-      - '*'
+      - '**'
     paths:
       - '*.md'
       - 'develop/*.md'
@@ -15,4 +15,6 @@ jobs:
     steps:
       - run: |
           printenv
-          echo "${{ github.ref }}"
+          cat << EOF
+          ${{ toJson(github) }}
+          EOF
