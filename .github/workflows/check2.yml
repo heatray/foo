@@ -31,7 +31,7 @@ jobs:
         run: |
           while read line; do
             echo $line
-            (exit 1)
+            code=1
           done < <(cat CHANGELOG.md \
             | aspell --encoding=utf-8 \
               --mode=markdown \
@@ -39,3 +39,4 @@ jobs:
               --personal=./.aspell.en.pws \
               list \
             | sort -u)
+          exit ${code:-0}
