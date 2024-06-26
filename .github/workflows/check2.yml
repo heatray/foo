@@ -29,7 +29,13 @@ jobs:
           sudo apt-get -y install aspell aspell-en
       - name: Run spellchecker
         run: |
-          SPELLCHECK_OUT=$(cat CHANGELOG.md \
-            | aspell --lang=en --encoding=utf-8 --personal=./.aspell.en.pws list)
-          echo $SPELLCHECK_OUT
-          [[ -z "$SPELLCHECK_OUT" ]] && exit 1
+          while read line; do
+            echo $line
+            (exit 1)
+          done < <(cat CHANGELOG.md \
+            | aspell --encoding=utf-8 \
+              --mode=markdown \
+              --lang=en \
+              --personal=./.aspell.en.pws \
+              list \
+            | sort -u)
