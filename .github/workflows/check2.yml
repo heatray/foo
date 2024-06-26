@@ -1,0 +1,35 @@
+name: Markdown Lint & Spellcheck
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - '**'
+    paths:
+      - 'CHANGELOG.md'
+      - '.aspell.*.pws'
+
+jobs:
+  markdownlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DavidAnson/markdownlint-cli2-action@v16
+        with:
+          # config: '.markdownlint.jsonc'
+          globs: |
+            CHANGELOG.md
+  spellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup aspell
+        run: |
+          sudo apt-get -y update
+          sudo apt-get -y install aspell aspell-en
+      - name: Run spellchecker
+        run: |
+          SPELLCHECK_OUT=$(cat CHANGELOG.md \
+            | aspell --lang=en --encoding=utf-8 --personal=./.aspell.en.pws list)
+          echo $SPELLCHECK_OUT
+          [[ -z "$SPELLCHECK_OUT" ]] && exit 1
