@@ -29,14 +29,17 @@ jobs:
           sudo apt-get -y install aspell aspell-en
       - name: Run spellchecker
         run: |
-          while read line; do
-            echo $line
-            code=1
-          done < <(cat CHANGELOG.md \
-            | aspell --encoding=utf-8 \
-              --mode=markdown \
+          set -eux
+          temp=$(mktemp)
+          cat CHANGELOG.md \
+            | aspell \
               --lang=en \
+              --encoding=utf-8 \
               --personal=./.aspell.en.pws \
               list \
-            | sort -u)
-          exit ${code:-0}
+            | sort -u \
+            > $temp
+          if [ -s $temp ]; then
+            cat $temp
+            exit 1
+          fi
