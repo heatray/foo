@@ -1,0 +1,22 @@
+name: Testing
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version'
+        required: true
+      build:
+        description: 'Build'
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Release
+        env:
+          VERSION: ${{ github.event.inputs.version }}
+          BUILD: ${{ github.event.inputs.build }}
+        run: |
+          echo $VERSION-$BUILD
