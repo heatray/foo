@@ -1,18 +1,37 @@
-name: 'Hello World'
-description: 'Greet someone and record the time'
+name: Example
 
 on: workflow_dispatch
 
-inputs:
-  who-to-greet:  # id of input
-    description: 'Who to greet'
-    required: true
-    default: 'World'
-outputs:
-  time: # id of output
-    description: 'The time we greeted you'
-runs:
-  using: 'docker'
-  image: 'Dockerfile'
-  args:
-    - ${{ inputs.who-to-greet }}
+jobs:
+  compile:
+    name: Compile core
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:16.04
+      env:
+        TZ: Etc/UTC
+        # UNAME: user
+        # UID: 1000
+        # GID: 1000
+      # volumes:
+      #   - my_docker_volume:/volume_mount
+
+    steps:
+      - name: Compile
+        run: |
+          set -eux
+
+          apt-get -y update
+          apt-get -y install \
+              python \
+              python3 \
+              sudo
+          ln -sf /usr/bin/python2 /usr/bin/python
+
+          # groupadd -g $GID $UNAME
+          # useradd -m -u $UID -g $GID -s /bin/bash $UNAME
+
+          mkdir -p /workspace
+          cd /workspace
+
+          git clone --depth 1 git@github.com:ONLYOFFICE/build_tools.git
