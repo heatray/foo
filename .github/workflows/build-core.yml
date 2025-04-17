@@ -25,7 +25,8 @@ jobs:
           apt-get -y install \
               python \
               python3 \
-              sudo
+              sudo \
+              git
           ln -sf /usr/bin/python2 /usr/bin/python
 
           # groupadd -g $GID $UNAME
