@@ -17,7 +17,7 @@ jobs:
       #   - my_docker_volume:/volume_mount
 
     steps:
-      - name: Compile
+      - name: Prepare
         run: |
           set -eux
 
@@ -32,6 +32,10 @@ jobs:
           # groupadd -g $GID $UNAME
           # useradd -m -u $UID -g $GID -s /bin/bash $UNAME
 
+      - name: Compile
+        run: |
+          set -eux
+
           mkdir -p /workspace
           cd /workspace
 
@@ -42,6 +46,5 @@ jobs:
             --module "core" \
             --platform linux_64 \
             --update true \
-            --clean true \
-            --branding onlyoffice
+            --clean true
           ./make.py
