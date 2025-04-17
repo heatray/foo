@@ -35,4 +35,4 @@ jobs:
           mkdir -p /workspace
           cd /workspace
 
-          git clone --depth 1 git@github.com:ONLYOFFICE/build_tools.git
+          git clone --depth 1 https://github.com/ONLYOFFICE/build_tools.git
