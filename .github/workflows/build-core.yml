@@ -36,3 +36,12 @@ jobs:
           cd /workspace
 
           git clone --depth 1 https://github.com/ONLYOFFICE/build_tools.git
+          cd build_tools
+
+          ./configure.py \
+            --module "core" \
+            --platform linux_64 \
+            --update true \
+            --clean true \
+            --branding onlyoffice
+          ./make.py
