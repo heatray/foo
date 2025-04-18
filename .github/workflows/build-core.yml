@@ -21,12 +21,16 @@ jobs:
         run: |
           set -eux
 
-          apt-get -y update
-          apt-get -y install \
+          apt -y update
+          apt -y install \
               python \
               python3 \
               sudo \
-              git
+              git \
+              build-essential \
+              crossbuild-essential-arm64 \
+              curl \
+              p7zip-full
           ln -sf /usr/bin/python2 /usr/bin/python
 
           # groupadd -g $GID $UNAME
