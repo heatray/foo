@@ -10,6 +10,9 @@ jobs:
       image: ubuntu:16.04
       env:
         TZ: Etc/UTC
+        JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
+        # MAKEFLAGS: -e -j8 -O recurse
+        QT_PATH: /opt/qt/5.9.9
         # UNAME: user
         # UID: 1000
         # GID: 1000
@@ -23,15 +26,53 @@ jobs:
 
           apt -y update
           apt -y install \
-              python \
-              python3 \
-              sudo \
-              git \
-              build-essential \
-              crossbuild-essential-arm64 \
-              curl \
-              p7zip-full
-          ln -sf /usr/bin/python2 /usr/bin/python
+            apt-transport-https \
+            autoconf2.13 \
+            build-essential \
+            crossbuild-essential-arm64 \
+            ca-certificates \
+            cmake \
+            curl \
+            git \
+            gzip \
+            p7zip-full \
+            python \
+            software-properties-common \
+            subversion \
+            sudo
+
+          apt -y install \
+            libasound2-dev \
+            libatspi2.0-dev \
+            libcups2-dev \
+            libdbus-1-dev \
+            libglu1-mesa-dev \
+            libgstreamer-plugins-base1.0-dev \
+            libgstreamer1.0-dev \
+            libgtk-3-dev \
+            libicu-dev \
+            libncurses5 \
+            libncurses6 \
+            libpulse-dev \
+            libtool \
+            libx11-xcb-dev \
+            libxcb* \
+            libxi-dev \
+            libxkbcommon-dev \
+            libxkbcommon-x11-dev \
+            libxrender-dev \
+            libxss1
+
+          curl -fsSL https://deb.nodesource.com/setup_16.x -o nodesource_setup.sh
+          bash nodesource_setup.sh
+          apt -y install nodejs
+          npm install -g grunt-cli pkg
+
+          add-apt-repository -y ppa:openjdk-r/ppa
+          apt -y update
+          apt -y install openjdk-11-jdk
+          update-alternatives --config java
+          update-alternatives --config javac
 
           # groupadd -g $GID $UNAME
           # useradd -m -u $UID -g $GID -s /bin/bash $UNAME
