@@ -1,0 +1,16 @@
+name: Compile core win_64
+
+on: workflow_dispatch
+
+jobs:
+  compile:
+    name: Compile core
+    runs-on: win_64
+    steps:
+      - name: Build
+        run: |
+          git clone git@git.onlyoffice.com:ONLYOFFICE/build_tools.git
+          git clone git@git.onlyoffice.com:ONLYOFFICE/onlyoffice.git
+          cd build_tools
+          python configure.py --module "core" --platform win_64 --update true --clean true --qt-dir C:\Qt\5.15.2 --branding onlyoffice --vs-version 2019
+          python make.py

@@ -16,5 +16,3 @@ jobs:
           echo "CONTEXT GITHUB"
           echo "${{ toJson(github) }}"
           echo ${{ github.ref_name }}
-          echo ${{ github.base_ref }}
-          echo ${{ github.head_ref }}
