@@ -14,10 +14,10 @@ jobs:
           echo "test${{ github.run_number }}" >> test.txt
           cat test.txt
           echo "CONTEXT GITHUB"
-          echo "${{ github }}"
+          echo "${{ toJson(github) }}"
           echo "CONTEXT ENV"
-          echo "${{ env }}"
+          echo "${{ toJson(env) }}"
           echo "CONTEXT VARS"
-          echo "${{ vars }}"
+          echo "${{ toJson(vars) }}"
           echo "CONTEXT INPUTS"
-          echo "${{ inputs }}"
+          echo "${{ toJson(inputs) }}"
