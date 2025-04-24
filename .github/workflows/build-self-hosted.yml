@@ -10,14 +10,11 @@ jobs:
       - name: Test
         run: |
           set -eux
-          ls -la
+          printenv
           echo "test${{ github.run_number }}" >> test.txt
           cat test.txt
           echo "CONTEXT GITHUB"
           echo "${{ toJson(github) }}"
-          echo "CONTEXT ENV"
-          echo "${{ toJson(env) }}"
-          echo "CONTEXT VARS"
-          echo "${{ toJson(vars) }}"
-          echo "CONTEXT INPUTS"
-          echo "${{ toJson(inputs) }}"
+          echo ${{ github.ref_name }}
+          echo ${{ github.base_ref }}
+          echo ${{ github.head_ref }}
