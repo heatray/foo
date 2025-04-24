@@ -11,5 +11,13 @@ jobs:
         run: |
           set -eux
           ls -la
-          echo test >> test.txt
+          echo "test${{ github.run_number }}" >> test.txt
           cat test.txt
+          echo "CONTEXT GITHUB"
+          echo "${{ github }}"
+          echo "CONTEXT ENV"
+          echo "${{ env }}"
+          echo "CONTEXT VARS"
+          echo "${{ vars }}"
+          echo "CONTEXT INPUTS"
+          echo "${{ inputs }}"
