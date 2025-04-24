@@ -5,7 +5,7 @@ on: workflow_dispatch
 jobs:
   compile:
     name: Test
-    runs-on: test-runner
+    runs-on: self-hosted
     steps:
       - name: Test
         run: |
