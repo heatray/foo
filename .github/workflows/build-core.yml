@@ -52,7 +52,6 @@ jobs:
             libgtk-3-dev \
             libicu-dev \
             libncurses5 \
-            libncurses6 \
             libpulse-dev \
             libtool \
             libx11-xcb-dev \
