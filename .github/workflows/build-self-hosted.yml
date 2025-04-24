@@ -1,0 +1,15 @@
+name: Example self-hosted
+
+on: workflow_dispatch
+
+jobs:
+  compile:
+    name: Test
+    runs-on: test-runner
+    steps:
+      - name: Test
+        run: |
+          set -eux
+          ls -la
+          echo test >> test.txt
+          cat test.txt
