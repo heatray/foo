@@ -9,8 +9,8 @@ jobs:
     steps:
       - name: Build
         run: |
-          git clone git@git.onlyoffice.com:ONLYOFFICE/build_tools.git
-          git clone git@git.onlyoffice.com:ONLYOFFICE/onlyoffice.git
+          git clone --branch release/v9.0.0 git@git.onlyoffice.com:ONLYOFFICE/build_tools.git
+          git clone --branch release/v9.0.0 git@git.onlyoffice.com:ONLYOFFICE/onlyoffice.git
           cd build_tools
-          python configure.py --module "core" --platform win_64 --update true --clean true --qt-dir C:\Qt\5.15.2 --branding onlyoffice --vs-version 2019
+          python configure.py --branch release/v9.0.0 --module "core" --platform win_64 --update true --clean true --qt-dir C:\Qt\5.15.2 --branding onlyoffice --vs-version 2019
           python make.py
