@@ -1,0 +1,22 @@
+name: Build core mac_64
+
+on: workflow_dispatch
+
+jobs:
+  build:
+    name: Build core
+    runs-on: mac_64
+    steps:
+      - name: Build
+        run: |
+          set -eux
+          git clone https://github.com/ONLYOFFICE/build_tools.git ||:
+          cd build_tools
+          ./configure.py \
+            --module "core" \
+            --platform mac_64 \
+            --update true \
+            --clean true \
+            --qt-dir $QT_PATH
+          ./make.py
+          ls -la out/mac_64/onlyoffice/core/
