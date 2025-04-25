@@ -8,6 +8,8 @@ jobs:
     runs-on: mac_64
     steps:
       - name: Build
+        env:
+          QT_PATH: /Users/builder/Qt/5.13.2
         run: |
           set -eux
           git clone https://github.com/ONLYOFFICE/build_tools.git ||:
