@@ -13,6 +13,15 @@ jobs:
         # MAKEFLAGS: -e -j8 -O recurse
 
     steps:
+      - name: Test
+        run: |
+          set -eux
+          ls -la /
+          ls -la /github
+          ls -la /github/home
+          ls -la /home
+          ls -la /home/user
+          printenv
       - name: Build
         run: |
           set -eux
