@@ -101,7 +101,7 @@ ENV QT_PATH=/opt/qt/5.9.9
 # ENV TZ=Etc/UTC
 # RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-ARG UNAME=user \
+ARG UNAME=runner \
     UID=1000 \
     GID=1000
 RUN set -eux; \

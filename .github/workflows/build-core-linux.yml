@@ -7,21 +7,12 @@ jobs:
     name: Build core
     runs-on: linux_64
     container:
-      image: ghcr.io/heatray/onlyoffice-builder:v1
+      image: ghcr.io/heatray/onlyoffice-builder:v4
       env:
         TZ: Etc/UTC
         # MAKEFLAGS: -e -j8 -O recurse
 
     steps:
-      - name: Test
-        run: |
-          set -eux
-          ls -la /
-          ls -la /github
-          ls -la /github/home
-          ls -la /home
-          ls -la /home/user
-          printenv
       - name: Build
         run: |
           set -eux
