@@ -7,23 +7,16 @@ jobs:
     name: Build core
     runs-on: linux_64
     container:
-      image: ghcr.io/heatray/onlyoffice-builder:latest
+      image: ghcr.io/heatray/onlyoffice-builder:v1
       env:
         TZ: Etc/UTC
-        JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
         # MAKEFLAGS: -e -j8 -O recurse
-        QT_PATH: /opt/qt/5.9.9
-        # UNAME: user
-        # UID: 1000
-        # GID: 1000
-      volumes:
-        - workspace:/workspace
 
     steps:
       - name: Build
         run: |
           set -eux
-          git clone --depth 1 https://github.com/ONLYOFFICE/build_tools.git
+          git clone https://github.com/ONLYOFFICE/build_tools.git ||:
           cd build_tools
           ./configure.py \
             --module "core" \
