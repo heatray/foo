@@ -29,6 +29,7 @@ jobs:
             --module "core" \
             --platform linux_64 \
             --update true \
-            --clean true
+            --clean true \
+            --qt-dir $QT_PATH
           ./make.py
           ls -la out/linux_64/onlyoffice/core/
