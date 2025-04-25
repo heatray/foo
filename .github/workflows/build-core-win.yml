@@ -1,10 +1,10 @@
-name: Compile core win_64
+name: Build core win_64
 
 on: workflow_dispatch
 
 jobs:
-  compile:
-    name: Compile core
+  build:
+    name: Build core
     runs-on: win_64
     steps:
       - name: Build
