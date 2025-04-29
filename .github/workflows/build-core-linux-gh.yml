@@ -10,6 +10,10 @@ jobs:
       image: ghcr.io/heatray/onlyoffice-builder:v4
 
     steps:
+      - name: Prepare
+        run: |
+          printenv
+          ls -lah
       - name: Build
         run: |
           set -eux
