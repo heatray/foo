@@ -7,7 +7,7 @@ jobs:
     name: Build core
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/heatray/onlyoffice-builder:v4
+      image: ghcr.io/heatray/onlyoffice-builder:v4-root
 
     steps:
       - name: Prepare
