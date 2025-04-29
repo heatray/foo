@@ -1,11 +1,11 @@
-name: Build core linux_64
+name: Build core linux_64 (github-hosted)
 
 on: workflow_dispatch
 
 jobs:
   build:
     name: Build core
-    runs-on: linux_64
+    runs-on: ubuntu-latest
     container:
       image: ghcr.io/heatray/onlyoffice-builder:v4
 
