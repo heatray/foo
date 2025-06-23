@@ -23,30 +23,24 @@ jobs:
 
     - name: Build
       run: |
-        # if (-not (Test-Path desktop-onlineinstaller)) {
-        # }
         git clone https://github.com/ONLYOFFICE/build_tools.git
         git clone https://github.com/ONLYOFFICE/desktop-onlineinstaller.git
 
+        $env:QT_ROOT_DIR
+
+        sl desktop-onlineinstaller
+
+        echo "module=onlineinstaller" >> config
+        echo "branch=master" >> config
+        echo "platform=win_32" >> config
+        echo "config=release" >> config
+        echo "clean=0" >> config
+        echo "update=0" >> config
+        echo "update-light=0" >> config
+        echo "git-protocol=https" >> config
+        echo "vs-version=2019" >> config
+        echo "qt-dir=`"$env:QT_ROOT_DIR\..`"" >> config
+        echo "qt-dir-xp=`"$env:QT_ROOT_DIR\..`"" >> config
+        python make.py
+
         gci
-
-        # sl desktop-onlineinstaller
-
-        # $Config = @()
-        # $Config += `
-        #   "module=onlineinstaller" `
-        #   "branch=master" `
-        #   "platform=win_32" `
-        #   "config=release" `
-        #   "clean=0" `
-        #   "update=0" `
-        #   "update-light=0" `
-        #   "git-protocol=https" `
-        #   "vs-version=2019" `
-        #   "qt-dir=`"$env:GITHUB_WORKSPACE\Qt\5.15.2`"" `
-        #   "qt-dir-xp=`"$env:GITHUB_WORKSPACE\Qt\5.15.2`""
-        # $Config
-        # Write-Output $Config | Out-File -Encoding UTF8 "config"
-        # python make.py
-
-        # gci
