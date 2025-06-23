@@ -36,23 +36,23 @@ jobs:
 
         gci
 
-        sl desktop-onlineinstaller
+        # sl desktop-onlineinstaller
 
-        $Config = @()
-        $Config += `
-          "module=onlineinstaller" `
-          "branch=master" `
-          "platform=win_32" `
-          "config=release" `
-          "clean=0" `
-          "update=0" `
-          "update-light=0" `
-          "git-protocol=ssh" `
-          "vs-version=2019" `
-          "qt-dir=`"$env:GITHUB_WORKSPACE\Qt\5.15.2`"" `
-          "qt-dir-xp=`"$env:GITHUB_WORKSPACE\Qt\5.15.2`""
-        $Config
-        Write-Output $Config | Out-File -Encoding UTF8 "config"
-        python make.py
+        # $Config = @()
+        # $Config += `
+        #   "module=onlineinstaller" `
+        #   "branch=master" `
+        #   "platform=win_32" `
+        #   "config=release" `
+        #   "clean=0" `
+        #   "update=0" `
+        #   "update-light=0" `
+        #   "git-protocol=ssh" `
+        #   "vs-version=2019" `
+        #   "qt-dir=`"$env:GITHUB_WORKSPACE\Qt\5.15.2`"" `
+        #   "qt-dir-xp=`"$env:GITHUB_WORKSPACE\Qt\5.15.2`""
+        # $Config
+        # Write-Output $Config | Out-File -Encoding UTF8 "config"
+        # python make.py
 
-        gci
+        # gci
