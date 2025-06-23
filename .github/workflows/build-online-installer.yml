@@ -23,9 +23,13 @@ jobs:
 
     - name: Build
       run: |
+        $ErrorActionPreference = "Stop"
+
         git clone https://github.com/ONLYOFFICE/build_tools.git
         git clone https://github.com/ONLYOFFICE/desktop-onlineinstaller.git
 
+        $env:QT_PATH = "$env:QT_ROOT_DIR\..\.." | Resolve-Path
+        $env:QT_PATH
         $env:QT_ROOT_DIR
 
         sl desktop-onlineinstaller
@@ -39,8 +43,9 @@ jobs:
         echo "update-light=0" >> config
         echo "git-protocol=https" >> config
         echo "vs-version=2019" >> config
-        echo "qt-dir=`"$env:QT_ROOT_DIR\..`"" >> config
-        echo "qt-dir-xp=`"$env:QT_ROOT_DIR\..`"" >> config
+        echo "qt-dir=`"$env:QT_PATH`"" >> config
+        echo "qt-dir-xp=`"$env:QT_PATH`"" >> config
+        gc config
         python make.py
 
         gci
