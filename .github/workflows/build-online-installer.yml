@@ -34,17 +34,19 @@ jobs:
 
         sl desktop-onlineinstaller
 
-        echo "module=onlineinstaller" >> config
-        echo "branch=master" >> config
-        echo "platform=win_32_xp" >> config
-        echo "config=release" >> config
-        echo "clean=0" >> config
-        echo "update=0" >> config
-        echo "update-light=0" >> config
-        echo "git-protocol=https" >> config
-        echo "vs-version=2019" >> config
-        echo "qt-dir=`"$env:QT_PATH`"" >> config
-        echo "qt-dir-xp=`"$env:QT_PATH`"" >> config
+        (Get-Content -Path sln.json) -replace "win_xp", "win" | Set-Content -Path sln.json
+
+        echo "module=onlineinstaller
+        branch=master
+        platform=win_32
+        config=release
+        clean=0
+        update=0
+        update-light=0
+        git-protocol=https
+        vs-version=2019
+        qt-dir=`"$env:QT_PATH`"
+        qt-dir-xp=`"$env:QT_PATH`"" >> config
         gc config
         python make.py
         if ($LastExitCode -ne 0) { throw }
