@@ -1,0 +1,50 @@
+name: Build online installer
+
+on: workflow_dispatch
+
+jobs:
+  build:
+    name: Build online installer
+    runs-on: windows-2019
+    steps:
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '5.15.2'
+          target: 'desktop'
+          arch: 'win32_msvc2019'
+          # arch: 'win64_msvc2019_64'
+          use-official: true
+          email: ${{ secrets.QT_EMAIL }}
+          pw: ${{ secrets.QT_PW }}
+
+      - name: Build
+        run: |
+          # if (-not (Test-Path desktop-onlineinstaller)) {
+          # }
+          git clone git@github.com:ONLYOFFICE/build-tools.git
+          git clone git@github.com:ONLYOFFICE/desktop-onlineinstaller.git
+
+          ls
+
+          sl desktop-onlineinstaller
+
+          $Config = @()
+          $Config += `
+            'module=onlineinstaller' `
+            'branch=master' `
+            'platform=win_32' `
+            'config=release' `
+            'clean=0' `
+            'update=0' `
+            'update-light=0' `
+            'git-protocol=ssh' `
+            'vs-version=2019' `
+            'qt-dir="$env:GITHUB_WORKSPACE\Qt\5.15.2"'
+            'qt-dir-xp="$env:GITHUB_WORKSPACE\Qt\5.15.2"'
+          $Config
+          Write-Output $Config | Out-File -Encoding UTF8 "config"
+          python make.py
+
+          ls
