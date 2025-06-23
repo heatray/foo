@@ -32,7 +32,7 @@ jobs:
         "QT_PATH = $env:QT_PATH"
         "QT_ROOT_DIR = $env:QT_ROOT_DIR"
         gci $env:QT_PATH
-        gci $env:QT_ROOT_DIR
+        gci $env:QT_ROOT_DIR\bin
 
         sl desktop-onlineinstaller
 
