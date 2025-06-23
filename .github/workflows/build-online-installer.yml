@@ -52,5 +52,11 @@ jobs:
         gc config
         python make.py
         if ($LastExitCode -ne 0) { throw }
-
+        gci
         gci build\win_32
+
+    - name: Archive artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: desktop-onlineinstaller
+        path: desktop-onlineinstaller/build/win_32/online-installer.exe
