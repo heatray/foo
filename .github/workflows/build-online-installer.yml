@@ -52,3 +52,5 @@ jobs:
         gc config
         python make.py
         if ($LastExitCode -ne 0) { throw }
+
+        gci build\win_32
