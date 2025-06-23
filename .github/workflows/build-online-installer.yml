@@ -28,11 +28,9 @@ jobs:
         git clone https://github.com/ONLYOFFICE/build_tools.git
         git clone https://github.com/ONLYOFFICE/desktop-onlineinstaller.git
 
-        $env:QT_PATH = "$env:QT_ROOT_DIR\..\.." | Resolve-Path
+        $env:QT_PATH = "$env:QT_ROOT_DIR\.." | Resolve-Path
         "QT_PATH = $env:QT_PATH"
         "QT_ROOT_DIR = $env:QT_ROOT_DIR"
-        gci $env:QT_PATH
-        gci $env:QT_ROOT_DIR\bin
 
         sl desktop-onlineinstaller
 
