@@ -36,7 +36,7 @@ jobs:
 
         echo "module=onlineinstaller" >> config
         echo "branch=master" >> config
-        echo "platform=win_32" >> config
+        echo "platform=win_32_xp" >> config
         echo "config=release" >> config
         echo "clean=0" >> config
         echo "update=0" >> config
@@ -47,5 +47,4 @@ jobs:
         echo "qt-dir-xp=`"$env:QT_PATH`"" >> config
         gc config
         python make.py
-
-        gci
+        if ($LastExitCode -ne 0) { throw }
