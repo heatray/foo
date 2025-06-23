@@ -8,24 +8,18 @@ jobs:
     runs-on: windows-2019
     steps:
 
-    - name: Cache Qt
-      id: cache-qt
-      uses: actions/cache@v4
-      with:
-        path: Qt
-        key: ${{ runner.os }}-qt
-
     - name: Install Qt
-      if: steps.cache-qt.outputs.cache-hit != 'true'
       uses: jurplel/install-qt-action@v4
       with:
-        version: '5.15.2'
-        target: 'desktop'
-        arch: 'win32_msvc2019'
+        version: 5.15.2
+        target: desktop
+        arch: win32_msvc2019
         # arch: 'win64_msvc2019_64'
         use-official: true
         email: ${{ secrets.QT_EMAIL }}
         pw: ${{ secrets.QT_PW }}
+        cache: true
+        cache-key-prefix: install-qt-action
 
     - name: Build
       run: |
