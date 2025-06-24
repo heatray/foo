@@ -1,11 +1,25 @@
 name: Build online installer
 
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version'
+        type: string
+        # required: true
+      build:
+        description: 'Build number'
+        type: string
+        # required: true
+      sign:
+        description: 'Sign installer'
+        type: boolean
+        default: true
 
 jobs:
   build:
     name: Build online installer
-    runs-on: windows-2019
+    runs-on: windows-2022
     steps:
 
     - name: Install Qt
@@ -14,7 +28,6 @@ jobs:
         version: 5.15.2
         target: desktop
         arch: win32_msvc2019
-        # arch: 'win64_msvc2019_64'
         use-official: true
         email: ${{ secrets.QT_EMAIL }}
         pw: ${{ secrets.QT_PW }}
@@ -23,19 +36,15 @@ jobs:
 
     - name: Build
       run: |
-        write "::group::Clone"
         git clone -q https://github.com/ONLYOFFICE/build_tools.git
         git clone -q https://github.com/ONLYOFFICE/core.git
         git clone -q https://github.com/ONLYOFFICE/desktop-apps.git
         git clone -q https://github.com/ONLYOFFICE/desktop-onlineinstaller.git
-        write "::endgroup::"
 
         sl desktop-onlineinstaller
 
         (Get-Content -Path make.py) -replace "build_sln", "qmake" | Set-Content -Path make.py
         (Get-Content -Path make.py) -replace "__dir__name__ \+ '/sln.json'", "'win_32','OnlineInstaller.pro'" | Set-Content -Path make.py
-
-        gc make.py
 
         write "::group::Config"
         $env:QT_PATH = "$env:QT_ROOT_DIR\.." | Resolve-Path
@@ -46,8 +55,8 @@ jobs:
         clean=0
         update=0
         update-light=0
-        vs-version=2019
-        qt-dir=`"$env:QT_PATH`"" >> config
+        vs-version=2022
+        qt-dir=`"$env:QT_PATH`"" > config
         gc config
         write "::endgroup::"
 
@@ -57,8 +66,31 @@ jobs:
         # if ($LastExitCode -ne 0) { throw }
         write "::endgroup::"
 
-        gci
-        gci build\win_32
+    - name: Sign
+      if: ${{ inputs.sign }}
+      run: |
+        $CertFile = "cert.pfx"
+        [IO.File]::WriteAllBytes($CertFile, [System.Convert]::FromBase64String($env:WINDOWS_CERTIFICATE))
+        $Password = ConvertTo-SecureString -String $env:WINDOWS_CERTIFICATE_PASSWORD -AsPlainText -Force
+        $pfx = Get-PfxData -FilePath "$CertFile" -Password $Password
+        $pfxCert =  $pfx.EndEntityCertificates[0]
+
+        $InputFile = "desktop-onlineinstaller\build\win_32\online-installer.exe"
+        (Get-AuthenticodeSignature $InputFile).Status
+        [System.Management.Automation.SignatureStatus]::Valid
+
+        write "Singning file $InputFile"
+        Set-AuthenticodeSignature `
+          -FilePath $InputFile `
+          -Certificate $pfxCert `
+          -IncludeChain All `
+          -TimestampServer 'http://timestamp.digicert.com' `
+          -HashAlgorithm 'sha256' `
+          -Force
+        # if((Get-AuthenticodeSignature $InputFile).Status -ne [System.Management.Automation.SignatureStatus]::Valid) {
+        # } else {
+        #   Write-Host "Skipping file $InputFile as it is already signed"
+        # }
 
     - name: Archive artifact
       uses: actions/upload-artifact@v4
@@ -66,4 +98,3 @@ jobs:
         name: onlineinstaller
         path: desktop-onlineinstaller/build/win_32/online-installer.exe
         if-no-files-found: error
-        compression-level: 0
