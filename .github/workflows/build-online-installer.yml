@@ -23,8 +23,6 @@ jobs:
 
     - name: Build
       run: |
-        "PSNativeCommandUseErrorActionPreference = $PSNativeCommandUseErrorActionPreference"
-
         write "[ Clone ]"
         git clone -q https://github.com/ONLYOFFICE/build_tools.git
         git clone -q https://github.com/ONLYOFFICE/core.git
@@ -34,16 +32,12 @@ jobs:
         sl desktop-onlineinstaller
 
         (Get-Content -Path make.py) -replace "build_sln", "qmake" | Set-Content -Path make.py
-        (Get-Content -Path make.py) -replace "__dir__name__ + '/sln.json'", "'win_32','OnlineInstaller.pro'" | Set-Content -Path make.py
+        (Get-Content -Path make.py) -replace "__dir__name__ \+ '/sln.json'", "'win_32','OnlineInstaller.pro'" | Set-Content -Path make.py
 
         gc make.py
 
-        write "[ Variables ]"
-        $env:QT_PATH = "$env:QT_ROOT_DIR\.." | Resolve-Path
-        "QT_PATH = $env:QT_PATH"
-        "QT_ROOT_DIR = $env:QT_ROOT_DIR"
-
         write "[ Config ]"
+        $env:QT_PATH = "$env:QT_ROOT_DIR\.." | Resolve-Path
         write "module=onlineinstaller
         branch=master
         platform=win_32
@@ -56,8 +50,9 @@ jobs:
         gc config
 
         write "[ Build ]"
+        $PSNativeCommandUseErrorActionPreference = True
         python make.py
-        if ($LastExitCode -ne 0) { throw }
+        # if ($LastExitCode -ne 0) { throw }
 
         gci
         gci build\win_32
