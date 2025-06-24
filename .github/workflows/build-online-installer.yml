@@ -23,11 +23,12 @@ jobs:
 
     - name: Build
       run: |
-        write "[ Clone ]"
+        write "::group::Clone"
         git clone -q https://github.com/ONLYOFFICE/build_tools.git
         git clone -q https://github.com/ONLYOFFICE/core.git
         git clone -q https://github.com/ONLYOFFICE/desktop-apps.git
         git clone -q https://github.com/ONLYOFFICE/desktop-onlineinstaller.git
+        write "::endgroup::"
 
         sl desktop-onlineinstaller
 
@@ -36,7 +37,7 @@ jobs:
 
         gc make.py
 
-        write "[ Config ]"
+        write "::group::Config"
         $env:QT_PATH = "$env:QT_ROOT_DIR\.." | Resolve-Path
         write "module=onlineinstaller
         branch=master
@@ -48,11 +49,13 @@ jobs:
         vs-version=2019
         qt-dir=`"$env:QT_PATH`"" >> config
         gc config
+        write "::endgroup::"
 
-        write "[ Build ]"
-        $PSNativeCommandUseErrorActionPreference = True
+        write "::group::Build"
+        $PSNativeCommandUseErrorActionPreference = $True
         python make.py
         # if ($LastExitCode -ne 0) { throw }
+        write "::endgroup::"
 
         gci
         gci build\win_32
