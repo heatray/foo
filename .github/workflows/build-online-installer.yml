@@ -23,27 +23,26 @@ jobs:
 
     - name: Build
       run: |
-        "ErrorActionPreference = $ErrorActionPreference"
-
-        $ErrorActionPreference = "Stop"
-
-        echo "[ Variables ]"
-        $env:QT_PATH = "$env:QT_ROOT_DIR\.." | Resolve-Path
-        "QT_PATH = $env:QT_PATH"
-        "QT_ROOT_DIR = $env:QT_ROOT_DIR"
-
-        echo "[ Clone ]"
+        write "[ Clone ]"
         git clone https://github.com/ONLYOFFICE/build_tools.git
         git clone https://github.com/ONLYOFFICE/core.git
         git clone https://github.com/ONLYOFFICE/desktop-apps.git
         git clone https://github.com/ONLYOFFICE/desktop-onlineinstaller.git
+
+        sl desktop-onlineinstaller
 
         (Get-Content -Path make.py) -replace "build_sln.make(__dir__name__ + '/sln.json')", "qmake.make('win_32', 'OnlineInstaller.pro')" | Set-Content -Path make.py
         (Get-Content -Path make.py) -replace "build_sln", "qmake" | Set-Content -Path make.py
 
         gc make.py
 
-        echo "module=onlineinstaller
+        write "[ Variables ]"
+        $env:QT_PATH = "$env:QT_ROOT_DIR\.." | Resolve-Path
+        "QT_PATH = $env:QT_PATH"
+        "QT_ROOT_DIR = $env:QT_ROOT_DIR"
+
+        write "[ Config ]"
+        write "module=onlineinstaller
         branch=master
         platform=win_32
         config=release
@@ -52,11 +51,9 @@ jobs:
         update-light=0
         vs-version=2019
         qt-dir=`"$env:QT_PATH`"" >> config
-
-        echo "[ Config ]"
         gc config
 
-        echo "[ Build ]"
+        write "[ Build ]"
         python make.py
         if ($LastExitCode -ne 0) { throw }
 
