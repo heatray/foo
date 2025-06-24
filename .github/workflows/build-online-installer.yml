@@ -23,20 +23,25 @@ jobs:
 
     - name: Build
       run: |
+        "ErrorActionPreference = $ErrorActionPreference"
+
         $ErrorActionPreference = "Stop"
 
+        echo "[ Variables ]"
+        $env:QT_PATH = "$env:QT_ROOT_DIR\.." | Resolve-Path
+        "QT_PATH = $env:QT_PATH"
+        "QT_ROOT_DIR = $env:QT_ROOT_DIR"
+
+        echo "[ Clone ]"
         git clone https://github.com/ONLYOFFICE/build_tools.git
         git clone https://github.com/ONLYOFFICE/core.git
         git clone https://github.com/ONLYOFFICE/desktop-apps.git
         git clone https://github.com/ONLYOFFICE/desktop-onlineinstaller.git
 
-        $env:QT_PATH = "$env:QT_ROOT_DIR\.." | Resolve-Path
-        "QT_PATH = $env:QT_PATH"
-        "QT_ROOT_DIR = $env:QT_ROOT_DIR"
+        (Get-Content -Path make.py) -replace "build_sln.make(__dir__name__ + '/sln.json')", "qmake.make('win_32', 'OnlineInstaller.pro')" | Set-Content -Path make.py
+        (Get-Content -Path make.py) -replace "build_sln", "qmake" | Set-Content -Path make.py
 
-        sl desktop-onlineinstaller
-
-        (Get-Content -Path sln.json) -replace "win_xp", "win" | Set-Content -Path sln.json
+        gc make.py
 
         echo "module=onlineinstaller
         branch=master
@@ -45,18 +50,23 @@ jobs:
         clean=0
         update=0
         update-light=0
-        git-protocol=https
         vs-version=2019
-        qt-dir=`"$env:QT_PATH`"
-        qt-dir-xp=`"$env:QT_PATH`"" >> config
+        qt-dir=`"$env:QT_PATH`"" >> config
+
+        echo "[ Config ]"
         gc config
+
+        echo "[ Build ]"
         python make.py
         if ($LastExitCode -ne 0) { throw }
+
         gci
         gci build\win_32
 
     - name: Archive artifact
       uses: actions/upload-artifact@v4
       with:
-        name: desktop-onlineinstaller
+        name: onlineinstaller
         path: desktop-onlineinstaller/build/win_32/online-installer.exe
+        if-no-files-found: error
+        compression-level: 0
