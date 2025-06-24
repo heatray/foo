@@ -23,16 +23,18 @@ jobs:
 
     - name: Build
       run: |
+        "PSNativeCommandUseErrorActionPreference = $PSNativeCommandUseErrorActionPreference"
+
         write "[ Clone ]"
-        git clone https://github.com/ONLYOFFICE/build_tools.git
-        git clone https://github.com/ONLYOFFICE/core.git
-        git clone https://github.com/ONLYOFFICE/desktop-apps.git
-        git clone https://github.com/ONLYOFFICE/desktop-onlineinstaller.git
+        git clone -q https://github.com/ONLYOFFICE/build_tools.git
+        git clone -q https://github.com/ONLYOFFICE/core.git
+        git clone -q https://github.com/ONLYOFFICE/desktop-apps.git
+        git clone -q https://github.com/ONLYOFFICE/desktop-onlineinstaller.git
 
         sl desktop-onlineinstaller
 
-        (Get-Content -Path make.py) -replace "build_sln.make(__dir__name__ + '/sln.json')", "qmake.make('win_32', 'OnlineInstaller.pro')" | Set-Content -Path make.py
         (Get-Content -Path make.py) -replace "build_sln", "qmake" | Set-Content -Path make.py
+        (Get-Content -Path make.py) -replace "__dir__name__ + '/sln.json'", "'win_32','OnlineInstaller.pro'" | Set-Content -Path make.py
 
         gc make.py
 
