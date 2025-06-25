@@ -58,6 +58,12 @@ jobs:
         (Get-Content -Path make.py) -replace "build_sln", "qmake" | Set-Content -Path make.py
         (Get-Content -Path make.py) -replace "__dir__name__ \+ '/sln.json'", "'win_32_xp','OnlineInstaller.pro'" | Set-Content -Path make.py
 
+        write "::group::Clean"
+        if (Test-Path build) {
+          ri -Force -Recurse -Path build
+        }
+        write "::endgroup::"
+
         write "::group::Config"
         $env:QT_PATH = "C:\Qt\5.6.3"
         write "module=onlineinstaller
@@ -67,7 +73,7 @@ jobs:
         clean=0
         update=0
         qt-dir=`"$env:QT_PATH`"
-        qt-dir-xp=`"$env:QT_PATH`"" > config
+        qt-dir-xp=`"$env:QT_PATH`"" | Out-File -Encoding UTF8 config
         gc config
         write "::endgroup::"
 
@@ -87,5 +93,5 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: onlineinstaller
-        path: desktop-onlineinstaller/build/win_32/online-installer.exe
+        path: desktop-onlineinstaller/build/win_32/xp/online-installer.exe
         if-no-files-found: error
