@@ -6,11 +6,9 @@ on:
       version:
         description: Version
         type: string
-        # required: true
       build:
         description: Build number
         type: string
-        # required: true
       sign:
         description: Sign
         type: boolean
@@ -21,6 +19,13 @@ jobs:
     name: Build online installer
     runs-on: [ self-hosted, Windows, onlineinstaller ]
     steps:
+
+    - name: Prepare
+      run: |
+        write "${{ github.head_ref }}"
+        write "${{ github.ref_name }}"
+        $env:PRODUCT_VERSION = "1.0.0"
+        $env:BUILD_NUMBER = "1"
 
     - name: Checkout
       run: |
@@ -59,6 +64,7 @@ jobs:
         popd
 
     - name: Build
+      working-directory: desktop-onlineinstaller
       run: |
         (Get-Content -Path make.py) -replace "build_sln", "qmake" | Set-Content -Path make.py
         (Get-Content -Path make.py) -replace "__dir__name__ \+ '/sln.json'", "'win_32_xp','OnlineInstaller.pro'" | Set-Content -Path make.py
@@ -85,20 +91,19 @@ jobs:
         write "::group::Build"
         & python make.py
         if (-not $?) { throw }
+        gci "build\win_32\xp\online-installer.exe" | % { $_.VersionInfo } | select *
         write "::endgroup::"
-      working-directory: desktop-onlineinstaller
 
     - name: Sign
       if: ${{ inputs.sign }}
-      run: |
-        & signtool sign /v `
-          /a /n "Ascensio System SIA" `
-          /t http://timestamp.digicert.com `
-          online-installer.exe
-        if (-not $?) { throw }
-        & signtool verify /q /pa /all online-installer.exe | Out-Null
-        if (-not $?) { throw }
       working-directory: desktop-onlineinstaller/build/win_32/xp
+      run: |
+        $File = "online-installer.exe"
+        $CertName = "Ascensio System SIA"
+        & signtool sign /v /a /n $CertName /t http://timestamp.digicert.com $File
+        if (-not $?) { throw }
+        & signtool verify /q /pa /all $File
+        if (-not $?) { throw }
 
     - name: Archive artifact
       uses: actions/upload-artifact@v4
