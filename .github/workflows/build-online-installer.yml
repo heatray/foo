@@ -55,13 +55,11 @@ jobs:
 
     - name: Build
       run: |
-        sl desktop-onlineinstaller
-
         (Get-Content -Path make.py) -replace "build_sln", "qmake" | Set-Content -Path make.py
         (Get-Content -Path make.py) -replace "__dir__name__ \+ '/sln.json'", "'win_32_xp','OnlineInstaller.pro'" | Set-Content -Path make.py
 
         write "::group::Config"
-        $env:QT_PATH = C:\Qt\5.6.3
+        $env:QT_PATH = "C:\Qt\5.6.3"
         write "module=onlineinstaller
         branch=master
         platform=win_32_xp
@@ -77,6 +75,13 @@ jobs:
         $PSNativeCommandUseErrorActionPreference = $True
         python make.py
         write "::endgroup::"
+      working-directory: desktop-onlineinstaller
+
+    - name: Sign
+      if: ${{ inputs.sign }}
+      run: |
+        write "test"
+      working-directory: desktop-onlineinstaller
 
     - name: Archive artifact
       uses: actions/upload-artifact@v4
