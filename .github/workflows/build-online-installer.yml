@@ -4,17 +4,19 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version'
+        description: Version
         type: string
-        # required: true
       build:
-        description: 'Build number'
+        description: Build number
         type: string
-        # required: true
       sign:
-        description: 'Sign installer'
+        description: Sign
         type: boolean
         default: true
+
+env:
+  PRODUCT_VERSION: ${{ inputs.version != '' && inputs.version || '0.0.0' }}
+  BUILD_NUMBER: ${{ inputs.build != '' && inputs.build || '0' }}
 
 jobs:
   build:
@@ -24,40 +26,102 @@ jobs:
 
     - name: Checkout
       run: |
-        git clone -q git@git.onlyoffice.com:ONLYOFFICE/build_tools.git
-        git clone -q git@git.onlyoffice.com:ONLYOFFICE/core.git
-        git clone -q git@git.onlyoffice.com:ONLYOFFICE/desktop-apps.git
-        git clone -q git@git.onlyoffice.com:ONLYOFFICE/desktop-onlineinstaller.git
+        $repos = "build_tools", "core", "desktop-apps"
+        $repos | % {
+          if (-not (Test-Path $_)) {
+            ni -ItemType Directory -Force -Path $_
+          }
+          pushd $_
+          if (-not (Test-Path .git)) {
+            & git clone -n --depth 1 git@git.onlyoffice.com:ONLYOFFICE/$_.git .
+            if (-not $?) { throw }
+          }
+          else {
+            & git fetch --depth 1
+            if (-not $?) { throw }
+          }
+          & git reset --hard origin/master
+          if (-not $?) { throw }
+          popd
+        }
+
+        $repo = "desktop-onlineinstaller"
+        if (-not (Test-Path $repo)) {
+          ni -ItemType Directory -Force -Path $repo
+        }
+        pushd $repo
+        if (-not (Test-Path .git)) {
+          & git clone -n git@git.onlyoffice.com:ONLYOFFICE/$repo.git .
+          if (-not $?) { throw }
+        }
+        else {
+          & git fetch --depth 1
+          if (-not $?) { throw }
+        }
+        if ("branch" -eq "${{ github.ref_type }}") {
+          & git reset --hard origin/${{ github.ref_name }}
+          if (-not $?) { throw }
+        }
+        elseif ("tag" -eq "${{ github.ref_type }}") {
+          & git reset --hard ${{ github.ref_name }}
+          if (-not $?) { throw }
+        }
+        else {
+          throw
+        }
+        popd
 
     - name: Build
+      working-directory: desktop-onlineinstaller
       run: |
-        sl desktop-onlineinstaller
-
-        (Get-Content -Path make.py) -replace "build_sln", "qmake" | Set-Content -Path make.py
-        (Get-Content -Path make.py) -replace "__dir__name__ \+ '/sln.json'", "'win_32','OnlineInstaller.pro'" | Set-Content -Path make.py
+        write "::group::Clean"
+        if (Test-Path build) {
+          ri -Force -Recurse -Verbose -Path build
+        }
+        write "::endgroup::"
 
         write "::group::Config"
-        $env:QT_PATH = "$env:QT_ROOT_DIR\.." | Resolve-Path
-        write "module=onlineinstaller
-        branch=master
-        platform=win_32
-        config=release
-        clean=0
-        update=0
-        update-light=0
-        vs-version=2022
-        qt-dir=`"$env:QT_PATH`"" > config
+        if (-not $env:QT_PATH) {
+          $env:QT_PATH = "C:\Qt\5.6.3"
+        }
+        write @"
+        module=`"onlineinstaller`"
+        platform=`"win_32_xp`"
+        config=`"release`"
+        branch=`"master`"
+        update=`"false`"
+        clean=`"false`"
+        qt-dir=`"$env:QT_PATH`"
+        qt-dir-xp=`"$env:QT_PATH`"
+        "@ | Out-File -Encoding UTF8 config
         gc config
+        write @"
+        PRODUCT_VERSION = $env:PRODUCT_VERSION
+        BUILD_NUMBER    = $env:BUILD_NUMBER
+        QT_PATH         = $env:QT_PATH
+        "@
         write "::endgroup::"
 
         write "::group::Build"
-        $PSNativeCommandUseErrorActionPreference = $True
-        python make.py
+        & python make.py
+        if (-not $?) { throw }
+        gci "build\win_32\xp\online-installer.exe" | % { $_.VersionInfo } | select *
         write "::endgroup::"
+
+    - name: Sign
+      if: ${{ inputs.sign }}
+      working-directory: desktop-onlineinstaller
+      run: |
+        $File = "build\win_32\xp\online-installer.exe"
+        $CertName = "Ascensio System SIA"
+        & signtool sign /v /a /n $CertName /t http://timestamp.digicert.com $File
+        if (-not $?) { throw }
+        & signtool verify /q /pa /all $File
+        if (-not $?) { throw }
 
     - name: Archive artifact
       uses: actions/upload-artifact@v4
       with:
-        name: onlineinstaller
-        path: desktop-onlineinstaller/build/win_32/online-installer.exe
+        name: OnlineInstaller-${{ env.PRODUCT_VERSION }}-${{ env.BUILD_NUMBER }}
+        path: desktop-onlineinstaller/build/win_32/xp/online-installer.exe
         if-no-files-found: error
