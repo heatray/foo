@@ -55,12 +55,13 @@ jobs:
 
     - name: Build
       run: |
+        $PSNativeCommandUseErrorActionPreference = $True
         (Get-Content -Path make.py) -replace "build_sln", "qmake" | Set-Content -Path make.py
         (Get-Content -Path make.py) -replace "__dir__name__ \+ '/sln.json'", "'win_32_xp','OnlineInstaller.pro'" | Set-Content -Path make.py
 
         write "::group::Clean"
         if (Test-Path build) {
-          ri -Force -Recurse -Path build
+          ri -Force -Recurse -Verbose -Path build
         }
         write "::endgroup::"
 
@@ -78,16 +79,20 @@ jobs:
         write "::endgroup::"
 
         write "::group::Build"
-        $PSNativeCommandUseErrorActionPreference = $True
-        python make.py
+        & python make.py
         write "::endgroup::"
       working-directory: desktop-onlineinstaller
 
     - name: Sign
       if: ${{ inputs.sign }}
       run: |
-        write "test"
-      working-directory: desktop-onlineinstaller
+        $PSNativeCommandUseErrorActionPreference = $True
+        & signtool sign /v `
+          /a /n "Ascensio System SIA" `
+          /t http://timestamp.digicert.com `
+          online-installer.exe
+        & signtool verify /q /pa /all online-installer.exe | Out-Null
+      working-directory: desktop-onlineinstaller/build/win_32/xp
 
     - name: Archive artifact
       uses: actions/upload-artifact@v4
