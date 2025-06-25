@@ -24,10 +24,34 @@ jobs:
 
     - name: Checkout
       run: |
-        git clone -q git@git.onlyoffice.com:ONLYOFFICE/build_tools.git
-        git clone -q git@git.onlyoffice.com:ONLYOFFICE/core.git
-        git clone -q git@git.onlyoffice.com:ONLYOFFICE/desktop-apps.git
-        git clone -q git@git.onlyoffice.com:ONLYOFFICE/desktop-onlineinstaller.git
+        $repos = "build_tools", "core", "desktop-apps"
+        $repos | % {
+          if (-not (Test-Path $_)) {
+            ni -ItemType Directory -Force -Path $_
+          }
+          pushd $_
+          if (-not (Test-Path .git)) {
+            git clone --depth 1 git@git.onlyoffice.com:ONLYOFFICE/$_.git .
+          }
+          else {
+            git fetch --depth 1
+            git reset --hard origin/master
+          }
+          popd
+        }
+
+        $repo = "desktop-onlineinstaller"
+        if (-not (Test-Path $repo)) {
+          ni -ItemType Directory -Force -Path $repo
+        }
+        pushd $repo
+        if (-not (Test-Path .git)) {
+          git clone git@git.onlyoffice.com:ONLYOFFICE/$repo.git .
+        }
+        else {
+          git reset --hard origin/master
+        }
+        popd
 
     - name: Build
       run: |
@@ -44,7 +68,8 @@ jobs:
         config=release
         clean=0
         update=0
-        qt-dir=`"$env:QT_PATH`"" > config
+        qt-dir=`"$env:QT_PATH`"
+        qt-dir-xp=`"$env:QT_PATH`"" > config
         gc config
         write "::endgroup::"
 
