@@ -19,28 +19,18 @@ on:
 jobs:
   build:
     name: Build online installer
-    runs-on: windows-2022
+    runs-on: [ self-hosted, Windows, onlineinstaller ]
     steps:
 
-    - name: Install Qt
-      uses: jurplel/install-qt-action@v4
-      with:
-        version: 5.15.2
-        target: desktop
-        arch: win32_msvc2019
-        use-official: true
-        email: ${{ secrets.QT_EMAIL }}
-        pw: ${{ secrets.QT_PW }}
-        cache: true
-        cache-key-prefix: install-qt-action
+    - name: Checkout
+      run: |
+        git clone -q git@git.onlyoffice.com:ONLYOFFICE/build_tools.git
+        git clone -q git@git.onlyoffice.com:ONLYOFFICE/core.git
+        git clone -q git@git.onlyoffice.com:ONLYOFFICE/desktop-apps.git
+        git clone -q git@git.onlyoffice.com:ONLYOFFICE/desktop-onlineinstaller.git
 
     - name: Build
       run: |
-        git clone -q https://github.com/ONLYOFFICE/build_tools.git
-        git clone -q https://github.com/ONLYOFFICE/core.git
-        git clone -q https://github.com/ONLYOFFICE/desktop-apps.git
-        git clone -q https://github.com/ONLYOFFICE/desktop-onlineinstaller.git
-
         sl desktop-onlineinstaller
 
         (Get-Content -Path make.py) -replace "build_sln", "qmake" | Set-Content -Path make.py
@@ -63,34 +53,7 @@ jobs:
         write "::group::Build"
         $PSNativeCommandUseErrorActionPreference = $True
         python make.py
-        # if ($LastExitCode -ne 0) { throw }
         write "::endgroup::"
-
-    - name: Sign
-      if: ${{ inputs.sign }}
-      run: |
-        $CertFile = "cert.pfx"
-        [IO.File]::WriteAllBytes($CertFile, [System.Convert]::FromBase64String($env:WINDOWS_CERTIFICATE))
-        $Password = ConvertTo-SecureString -String $env:WINDOWS_CERTIFICATE_PASSWORD -AsPlainText -Force
-        $pfx = Get-PfxData -FilePath "$CertFile" -Password $Password
-        $pfxCert =  $pfx.EndEntityCertificates[0]
-
-        $InputFile = "desktop-onlineinstaller\build\win_32\online-installer.exe"
-        (Get-AuthenticodeSignature $InputFile).Status
-        [System.Management.Automation.SignatureStatus]::Valid
-
-        write "Singning file $InputFile"
-        Set-AuthenticodeSignature `
-          -FilePath $InputFile `
-          -Certificate $pfxCert `
-          -IncludeChain All `
-          -TimestampServer 'http://timestamp.digicert.com' `
-          -HashAlgorithm 'sha256' `
-          -Force
-        # if((Get-AuthenticodeSignature $InputFile).Status -ne [System.Management.Automation.SignatureStatus]::Valid) {
-        # } else {
-        #   Write-Host "Skipping file $InputFile as it is already signed"
-        # }
 
     - name: Archive artifact
       uses: actions/upload-artifact@v4
