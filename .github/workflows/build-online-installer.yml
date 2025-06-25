@@ -4,15 +4,15 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version'
+        description: Version
         type: string
         # required: true
       build:
-        description: 'Build number'
+        description: Build number
         type: string
         # required: true
       sign:
-        description: 'Sign installer'
+        description: Sign
         type: boolean
         default: true
 
@@ -31,11 +31,14 @@ jobs:
           }
           pushd $_
           if (-not (Test-Path .git)) {
-            git clone --depth 1 git@git.onlyoffice.com:ONLYOFFICE/$_.git .
+            & git clone --depth 1 git@git.onlyoffice.com:ONLYOFFICE/$_.git .
+            if (-not $?) { throw }
           }
           else {
-            git fetch --depth 1
-            git reset --hard origin/master
+            & git fetch --depth 1
+            if (-not $?) { throw }
+            & git reset --hard origin/master
+            if (-not $?) { throw }
           }
           popd
         }
@@ -46,16 +49,17 @@ jobs:
         }
         pushd $repo
         if (-not (Test-Path .git)) {
-          git clone git@git.onlyoffice.com:ONLYOFFICE/$repo.git .
+          & git clone git@git.onlyoffice.com:ONLYOFFICE/$repo.git .
+          if (-not $?) { throw }
         }
         else {
-          git reset --hard origin/master
+          & git reset --hard origin/master
+          if (-not $?) { throw }
         }
         popd
 
     - name: Build
       run: |
-        $PSNativeCommandUseErrorActionPreference = $True
         (Get-Content -Path make.py) -replace "build_sln", "qmake" | Set-Content -Path make.py
         (Get-Content -Path make.py) -replace "__dir__name__ \+ '/sln.json'", "'win_32_xp','OnlineInstaller.pro'" | Set-Content -Path make.py
 
@@ -80,18 +84,20 @@ jobs:
 
         write "::group::Build"
         & python make.py
+        if (-not $?) { throw }
         write "::endgroup::"
       working-directory: desktop-onlineinstaller
 
     - name: Sign
       if: ${{ inputs.sign }}
       run: |
-        $PSNativeCommandUseErrorActionPreference = $True
         & signtool sign /v `
           /a /n "Ascensio System SIA" `
           /t http://timestamp.digicert.com `
           online-installer.exe
+        if (-not $?) { throw }
         & signtool verify /q /pa /all online-installer.exe | Out-Null
+        if (-not $?) { throw }
       working-directory: desktop-onlineinstaller/build/win_32/xp
 
     - name: Archive artifact
