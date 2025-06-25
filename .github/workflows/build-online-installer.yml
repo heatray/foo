@@ -22,8 +22,7 @@ jobs:
 
     - name: Prepare
       run: |
-        write "${{ github.head_ref }}"
-        write "${{ github.ref_name }}"
+        write "${{ toJson(github) }}"
         $env:PRODUCT_VERSION = "1.0.0"
         $env:BUILD_NUMBER = "1"
 
