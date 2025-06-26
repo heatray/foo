@@ -33,15 +33,15 @@ jobs:
           }
           pushd $_
           if (-not (Test-Path .git)) {
-            & git clone --depth 1 git@git.onlyoffice.com:ONLYOFFICE/$_.git .
+            & git clone -n --depth 1 git@git.onlyoffice.com:ONLYOFFICE/$_.git .
             if (-not $?) { throw }
           }
           else {
             & git fetch --depth 1
             if (-not $?) { throw }
-            & git reset --hard origin/master
-            if (-not $?) { throw }
           }
+          & git reset --hard origin/master
+          if (-not $?) { throw }
           popd
         }
 
@@ -51,17 +51,23 @@ jobs:
         }
         pushd $repo
         if (-not (Test-Path .git)) {
-          & git clone git@git.onlyoffice.com:ONLYOFFICE/$repo.git .
+          & git clone -n git@git.onlyoffice.com:ONLYOFFICE/$repo.git .
           if (-not $?) { throw }
         }
         else {
-          if ("branch" -eq "${{ github.ref_type }}") {
-            & git reset --hard origin/${{ github.ref_name }}
-            if (-not $?) { throw }
-          }
-          else {
-            throw
-          }
+          & git fetch --depth 1
+          if (-not $?) { throw }
+        }
+        if ("branch" -eq "${{ github.ref_type }}") {
+          & git reset --hard origin/${{ github.ref_name }}
+          if (-not $?) { throw }
+        }
+        elseif ("tag" -eq "${{ github.ref_type }}") {
+          & git reset --hard ${{ github.ref_name }}
+          if (-not $?) { throw }
+        }
+        else {
+          throw
         }
         popd
 
@@ -78,11 +84,11 @@ jobs:
         write "::endgroup::"
 
         write "::group::Config"
-        if (-not $env:PRODUCT_VERSION) {
-          $env:PRODUCT_VERSION = "${{ inputs.version || "0.0.0" }}"
+        if (-not "${{ inputs.version }}") {
+          $env:PRODUCT_VERSION = "0.0.0"
         }
-        if (-not $env:BUILD_NUMBER) {
-          $env:BUILD_NUMBER = "${{ inputs.build || "1" }}"
+        if (-not "${{ inputs.build }}") {
+          $env:BUILD_NUMBER = "1"
         }
         if (-not $env:QT_PATH) {
           $env:QT_PATH = "C:\Qt\5.6.3"
