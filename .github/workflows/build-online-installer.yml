@@ -84,8 +84,8 @@ jobs:
         write "::endgroup::"
 
         write "::group::Config"
-        $env:PRODUCT_VERSION = "${{ inputs.version != "" && inputs.version || "0.0.0" }}"
-        $env:BUILD_NUMBER = "${{ inputs.build != "" && inputs.build || "0" }}"
+        $env:PRODUCT_VERSION = "${{ inputs.version != '' && inputs.version || '0.0.0' }}"
+        $env:BUILD_NUMBER = "${{ inputs.build != '' && inputs.build || '0' }}"
         if (-not $env:QT_PATH) {
           $env:QT_PATH = "C:\Qt\5.6.3"
         }
