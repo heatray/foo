@@ -20,12 +20,15 @@ jobs:
     - name: Set Variables
       run: |
         if ("tag" -eq "${{ github.ref_type }}") {
-          write "PRODUCT_VERSION=$("${{ github.ref }}" -replace "^v")" >> $env:GITHUB_ENV
+          write "PRODUCT_VERSION=$("${{ github.ref_name }}" -replace "^v")" >> $env:GITHUB_ENV
         }
         else {
           write "PRODUCT_VERSION=0.0.0" >> $env:GITHUB_ENV
         }
         write "BUILD_NUMBER=${{ github.run_number }}" >> $env:GITHUB_ENV
+
+        $githubContext = "${{ toJSON(github) }}" | ConvertFrom-Json
+        $githubContext | ConvertTo-Json -Depth 10 | Write-Host
 
     - name: Checkout
       uses: actions/checkout@v4
@@ -118,7 +121,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ github.ref }}
-        release_name: ${{ github.ref }}
+        release_name: ${{ github.ref_name }}
         draft: false
         prerelease: false
 
