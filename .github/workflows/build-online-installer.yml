@@ -1,0 +1,63 @@
+name: Build online installer
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version'
+        type: string
+        # required: true
+      build:
+        description: 'Build number'
+        type: string
+        # required: true
+      sign:
+        description: 'Sign installer'
+        type: boolean
+        default: true
+
+jobs:
+  build:
+    name: Build online installer
+    runs-on: [ self-hosted, Windows, onlineinstaller ]
+    steps:
+
+    - name: Checkout
+      run: |
+        git clone -q git@git.onlyoffice.com:ONLYOFFICE/build_tools.git
+        git clone -q git@git.onlyoffice.com:ONLYOFFICE/core.git
+        git clone -q git@git.onlyoffice.com:ONLYOFFICE/desktop-apps.git
+        git clone -q git@git.onlyoffice.com:ONLYOFFICE/desktop-onlineinstaller.git
+
+    - name: Build
+      run: |
+        sl desktop-onlineinstaller
+
+        (Get-Content -Path make.py) -replace "build_sln", "qmake" | Set-Content -Path make.py
+        (Get-Content -Path make.py) -replace "__dir__name__ \+ '/sln.json'", "'win_32','OnlineInstaller.pro'" | Set-Content -Path make.py
+
+        write "::group::Config"
+        $env:QT_PATH = "$env:QT_ROOT_DIR\.." | Resolve-Path
+        write "module=onlineinstaller
+        branch=master
+        platform=win_32
+        config=release
+        clean=0
+        update=0
+        update-light=0
+        vs-version=2022
+        qt-dir=`"$env:QT_PATH`"" > config
+        gc config
+        write "::endgroup::"
+
+        write "::group::Build"
+        $PSNativeCommandUseErrorActionPreference = $True
+        python make.py
+        write "::endgroup::"
+
+    - name: Archive artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: onlineinstaller
+        path: desktop-onlineinstaller/build/win_32/online-installer.exe
+        if-no-files-found: error
