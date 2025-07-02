@@ -27,8 +27,9 @@ jobs:
         }
         write "BUILD_NUMBER=${{ github.run_number }}" >> $env:GITHUB_ENV
 
-        $githubContext = "${{ toJSON(github) }}" | ConvertFrom-Json
-        $githubContext | ConvertTo-Json -Depth 10 | Write-Host
+        write @'
+        ${{ toJSON(github) }}
+        '@
 
     - name: Checkout
       uses: actions/checkout@v4
