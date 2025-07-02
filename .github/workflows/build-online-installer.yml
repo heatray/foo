@@ -18,7 +18,6 @@ jobs:
     steps:
 
     - name: Set Variables
-      working-directory: desktop-onlineinstaller
       run: |
         if ("tag" -eq "${{ github.ref_type }}") {
           write "PRODUCT_VERSION=$("${{ github.ref }}" -replace "^v")" >> $env:GITHUB_ENV
