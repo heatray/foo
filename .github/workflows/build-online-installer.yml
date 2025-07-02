@@ -3,26 +3,30 @@ name: Build online installer
 on:
   workflow_dispatch:
     inputs:
-      version:
-        description: Version
-        type: string
-      build:
-        description: Build number
-        type: string
       sign:
         description: Sign
         type: boolean
         default: true
-
-env:
-  PRODUCT_VERSION: ${{ inputs.version != '' && inputs.version || '0.0.0' }}
-  BUILD_NUMBER: ${{ inputs.build != '' && inputs.build || '0' }}
+  push:
+    tags:
+    - 'v[0-9]+.[0-9]+.[0-9]+'
 
 jobs:
   build:
     name: Build online installer
     runs-on: [ self-hosted, Windows, onlineinstaller ]
     steps:
+
+    - name: Set Variables
+      working-directory: desktop-onlineinstaller
+      run: |
+        if ("tag" -eq "${{ github.ref_type }}") {
+          write "PRODUCT_VERSION=$("${{ github.ref }}" -replace "^v")" >> $env:GITHUB_ENV
+        }
+        else {
+          write "PRODUCT_VERSION=0.0.0" >> $env:GITHUB_ENV
+        }
+        write "BUILD_NUMBER=${{ github.run_number }}" >> $env:GITHUB_ENV
 
     - name: Checkout
       uses: actions/checkout@v4
@@ -106,3 +110,27 @@ jobs:
         name: OnlineInstaller-${{ env.PRODUCT_VERSION }}-${{ env.BUILD_NUMBER }}
         path: desktop-onlineinstaller/build/win_32/xp/online-installer.exe
         if-no-files-found: error
+
+    - name: Create Release
+      if: ${{ github.event_name == 'push' }}
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: ${{ github.ref }}
+        draft: false
+        prerelease: false
+
+    - name: Upload Release Asset
+      if: ${{ github.event_name == 'push' }}
+      id: upload_release_asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        # asset_path: ./OnlineInstaller.zip
+        # asset_name: OnlineInstaller.zip
+        # asset_content_type: application/zip
