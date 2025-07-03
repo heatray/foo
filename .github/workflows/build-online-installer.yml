@@ -114,13 +114,9 @@ jobs:
       uses: softprops/action-gh-release@v2
       if: github.ref_type == 'tag'
       with:
-        body: body
-        draft: false
-        prerelease: false
-        name: name
-        generate_release_notes: false
-        append_body: append_body
+        # name: name
         make_latest: true
+        generate_release_notes: false
         files: desktop-onlineinstaller/build/win_32/xp/online-installer.exe
 
     - name: Upload to S3
