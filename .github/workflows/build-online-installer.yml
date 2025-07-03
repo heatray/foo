@@ -97,7 +97,7 @@ jobs:
         write "::endgroup::"
 
     - name: Sign
-      if: ${{ inputs.sign }}
+      if: ${{ inputs.sign || github.ref_type == 'tag' }}
       working-directory: desktop-onlineinstaller
       run: |
         $File = "build\win_32\xp\online-installer.exe"
