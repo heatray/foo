@@ -114,13 +114,15 @@ jobs:
       uses: softprops/action-gh-release@v2
       if: github.ref_type == 'tag'
       with:
-        # name: name
+        name: OnlineInstaller-${{ env.PRODUCT_VERSION }}
         make_latest: true
-        generate_release_notes: false
         files: desktop-onlineinstaller/build/win_32/xp/online-installer.exe
 
     - name: Upload to S3
       if: github.ref_type == 'tag'
       working-directory: desktop-onlineinstaller/build/win_32/xp
       run: |
-        echo aws s3 cp --acl public-read src dst
+        write @"
+        https://download.onlyoffice.com/$ReleasePath/OnlineInstaller.exe
+        https://download.onlyoffice.com/$ReleasePath/OnlineInstaller-${{ env.PRODUCT_VERSION }}.exe
+        "@
