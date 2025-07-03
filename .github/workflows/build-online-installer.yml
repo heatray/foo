@@ -19,12 +19,8 @@ jobs:
 
     - name: Set Variables
       run: |
-        if ("tag" -eq "${{ github.ref_type }}") {
-          write "PRODUCT_VERSION=$("${{ github.ref_name }}" -replace "^v")" >> $env:GITHUB_ENV
-        }
-        else {
-          write "PRODUCT_VERSION=0.0.0" >> $env:GITHUB_ENV
-        }
+        $version = "${{ github.ref_name }}" -replace "^v"
+        write "PRODUCT_VERSION=${{ github.ref_type == 'tag' && '$version' || '0.0.0' }}" >> $env:GITHUB_ENV
         write "BUILD_NUMBER=${{ github.run_number }}" >> $env:GITHUB_ENV
 
         write @'
@@ -97,10 +93,10 @@ jobs:
         write "::endgroup::"
 
     - name: Sign
-      if: ${{ inputs.sign || github.ref_type == 'tag' }}
-      working-directory: desktop-onlineinstaller
+      if: github.ref_type == 'tag' || inputs.sign
+      working-directory: desktop-onlineinstaller/build/win_32/xp
       run: |
-        $File = "build\win_32\xp\online-installer.exe"
+        $File = "online-installer.exe"
         $CertName = "Ascensio System SIA"
         & signtool sign /v /a /n $CertName /t http://timestamp.digicert.com $File
         if (-not $?) { throw }
@@ -115,25 +111,13 @@ jobs:
         if-no-files-found: error
 
     - name: Create Release
-      if: ${{ github.event_name == 'push' }}
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v2
+      if: github.ref_type == 'tag'
       with:
-        tag_name: ${{ github.ref }}
-        release_name: ${{ github.ref_name }}
-        draft: false
-        prerelease: false
+        files: desktop-onlineinstaller/build/win_32/xp/online-installer.exe
 
-    - name: Upload Release Asset
-      if: ${{ github.event_name == 'push' }}
-      id: upload_release_asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        # asset_path: ./OnlineInstaller.zip
-        # asset_name: OnlineInstaller.zip
-        # asset_content_type: application/zip
+    - name: Upload to S3
+      if: github.ref_type == 'tag'
+      working-directory: desktop-onlineinstaller/build/win_32/xp
+      run: |
+        echo aws s3 cp --acl public-read src dst
