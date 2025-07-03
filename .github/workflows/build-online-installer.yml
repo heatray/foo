@@ -1,4 +1,5 @@
 name: Build online installer
+run-name: "Build #${{ github.run_number }}"
 
 on:
   workflow_dispatch:
@@ -122,6 +123,7 @@ jobs:
       if: github.ref_type == 'tag'
       working-directory: desktop-onlineinstaller/build/win_32/xp
       run: |
+        $ReleasePath = "install/desktop/editors/windows/distrib/onlyoffice"
         write @"
         https://download.onlyoffice.com/$ReleasePath/OnlineInstaller.exe
         https://download.onlyoffice.com/$ReleasePath/OnlineInstaller-${{ env.PRODUCT_VERSION }}.exe
