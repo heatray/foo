@@ -12,6 +12,8 @@ jobs:
     - name: Download artifacts
       uses: actions/download-artifact@v5
       with:
-        name: OnlineInstaller-0.0.0-66
+        # name: OnlineInstaller-0.0.0-66
+        pattern: OnlineInstaller-*
+        run-id: 16054389865
 
     - run: ls -la
