@@ -22,7 +22,7 @@ jobs:
     - name: Download artifacts
       uses: actions/download-artifact@v5
       with:
-        name: ${{ env.PACKAGE }}-${{ env.VERSION }}
+        name: OnlineInstaller-1.1.8-64
         github-token: ${{ github.token }}
 
     - name: Test
