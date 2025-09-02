@@ -1,0 +1,17 @@
+name: Release online installer
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Release online installer
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Download artifacts
+      uses: actions/download-artifact@v5
+      with:
+        name: OnlineInstaller-0.0.0-66
+
+    - run: ls -la
