@@ -12,27 +12,20 @@ jobs:
     - name: Set Variables
       run: |
         set -x
-        PACKAGE=OnlineInstaller
-        echo "PACKAGE=$PACKAGE" >> $GITHUB_ENV
-        # VERSION=${{ github.ref_name }}
-        VERSION=v1.1.8.64
-        VERSION=${VERSION#v}
-        echo "VERSION=$VERSION" >> $GITHUB_ENV
+        temp=v1.1.8.64
+        echo "\
+        PACKAGE=ONLYOFFICEDesktopInstaller
+        VERSION=${temp#v}
+        RUN_NUMBER=${temp##*.}\
+        " >> $GITHUB_ENV
 
     - name: Download artifact
       id: download-artifact
       uses: dawidd6/action-download-artifact@v11
       with:
         workflow: build-online-installer.yml
-        run_number: 64
-        # skip_unpack: false
-
-    # - name: Download artifacts
-    #   uses: actions/download-artifact@v5
-    #   with:
-    #     name: OnlineInstaller-1.1.8-64
-    #     github-token: ${{ github.token }}
-    #     run-id:
+        name: OnlineInstaller-1.1.8-64
+        run_number: ${{ env.RUN_NUMBER }}
 
     - name: Test
       run: |
