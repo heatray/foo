@@ -10,10 +10,25 @@ jobs:
     steps:
 
     - name: Download artifacts
-      uses: actions/download-artifact@v5
-      with:
-        # name: OnlineInstaller-0.0.0-66
-        pattern: OnlineInstaller-*
-        run-id: 16054389865
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -x
+        # VERSION=${{ github.ref_name }}
+        VERSION=v1.1.8.64
+        VERSION=${VERSION#v}
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-    - run: ls -la
+        gh run download \
+          --repo ${{ github.repository }} \
+          --name OnlineInstaller-1.1.8-64
+
+        ls -la
+        which aws
+
+    # - name: Download artifacts
+    #   uses: actions/download-artifact@v5
+    #   with:
+    #     name: OnlineInstaller-1.1.8-64
+    #     # pattern: OnlineInstaller-*
+    #     run-id: 16054279714
