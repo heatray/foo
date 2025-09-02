@@ -19,12 +19,20 @@ jobs:
         VERSION=${VERSION#v}
         echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-    - name: Download artifacts
-      uses: actions/download-artifact@v5
+    - name: Download artifact
+      id: download-artifact
+      uses: dawidd6/action-download-artifact@v11
       with:
-        name: OnlineInstaller-1.1.8-64
-        github-token: ${{ github.token }}
-        run-id:
+        workflow: build-online-installer.yml
+        run_number: 64
+        # skip_unpack: false
+
+    # - name: Download artifacts
+    #   uses: actions/download-artifact@v5
+    #   with:
+    #     name: OnlineInstaller-1.1.8-64
+    #     github-token: ${{ github.token }}
+    #     run-id:
 
     - name: Test
       run: |
