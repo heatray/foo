@@ -2,6 +2,9 @@ name: Release online installer
 
 on:
   workflow_dispatch:
+  push:
+    tags:
+    - 'v\d+\.\d+\.\d+\.\d+'
 
 jobs:
   build:
@@ -12,11 +15,11 @@ jobs:
     - name: Set Variables
       run: |
         set -x
-        temp=v1.1.8.64
+        REF="${{ github.ref_name }}"
         echo "\
         PACKAGE=ONLYOFFICEDesktopInstaller
-        VERSION=${temp#v}
-        RUN_NUMBER=${temp##*.}\
+        VERSION=${REF#v}
+        RUN_NUMBER=${REF##*.}\
         " >> $GITHUB_ENV
 
     - name: Download artifact
